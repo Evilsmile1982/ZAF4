@@ -24,7 +24,7 @@ jobs:
           cache: gradle
 
       - name: Build mit Gradle
-        run: gradle build
+        run: gradle :App:assembleDebug
 
       - name: APK bauen
         run: gradle assembleDebug

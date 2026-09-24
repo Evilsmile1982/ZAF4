@@ -2,22 +2,35 @@ name: Android CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - "hauptsächlich"
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - "hauptsächlich"
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
-    - name: Build with Gradle
-      run: gradle build
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: JDK 17 einrichten
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Build mit Gradle
+        run: gradle build
+
+      - name: APK bauen
+        run: gradle assembleDebug
+
+      - name: APK hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Z-Aero-Diamond-Clean
+          path: App/build/outputs/apk/debug/*.apk

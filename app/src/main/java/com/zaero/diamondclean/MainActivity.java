@@ -14,6 +14,7 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.Gravity;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ScaleGestureDetector;
@@ -890,6 +891,41 @@ public class MainActivity extends Activity {
         final float[] downX = {0f};
         final boolean[] didPinch = {false};
 
+        // Doppelklick vergrößert das Bild. Ein weiterer Doppelklick
+        // setzt es wieder auf die normale Größe zurück.
+        GestureDetector doubleTapDetector =
+                new GestureDetector(
+                        this,
+                        new GestureDetector.SimpleOnGestureListener() {
+                            @Override
+                            public boolean onDown(MotionEvent e) {
+                                return true;
+                            }
+
+                            @Override
+                            public boolean onDoubleTap(MotionEvent e) {
+                                float currentScale =
+                                        image.getScaleX();
+
+                                float newScale =
+                                        currentScale <= 1.05f
+                                                ? 2f
+                                                : 1f;
+
+                                image.setScaleX(newScale);
+                                image.setScaleY(newScale);
+
+                                // Das Bild bleibt immer mittig und
+                                // kann nicht verschoben werden.
+                                image.setTranslationX(0f);
+                                image.setTranslationY(0f);
+
+                                return true;
+                            }
+                        });
+
+        // Zwei Finger erlauben zusätzliches Zoomen.
+        // Das Bild bleibt dabei immer fest zentriert.
         ScaleGestureDetector pinchDetector =
                 new ScaleGestureDetector(
                         this,
@@ -907,7 +943,6 @@ public class MainActivity extends Activity {
                                 float newScale =
                                         currentScale * factor;
 
-                                // Maximal 4-fache Vergrößerung.
                                 newScale =
                                         Math.max(1f,
                                                 Math.min(4f, newScale));
@@ -915,12 +950,16 @@ public class MainActivity extends Activity {
                                 image.setScaleX(newScale);
                                 image.setScaleY(newScale);
 
+                                image.setTranslationX(0f);
+                                image.setTranslationY(0f);
+
                                 didPinch[0] = true;
                                 return true;
                             }
                         });
 
         image.setOnTouchListener((v, event) -> {
+            doubleTapDetector.onTouchEvent(event);
             pinchDetector.onTouchEvent(event);
 
             switch (event.getActionMasked()) {
@@ -931,13 +970,10 @@ public class MainActivity extends Activity {
                     return true;
 
                 case MotionEvent.ACTION_POINTER_DOWN:
-                    // Ab jetzt ist es eine Zwei-Finger-Geste.
                     didPinch[0] = true;
                     return true;
 
                 case MotionEvent.ACTION_UP:
-                    // Nach einem Pinch niemals versehentlich ein Bild
-                    // wechseln.
                     if (didPinch[0]) {
                         return true;
                     }
@@ -945,6 +981,8 @@ public class MainActivity extends Activity {
                     float deltaX =
                             event.getX() - downX[0];
 
+                    // Ein Finger darf nur zum Blättern dienen.
+                    // Das Bild selbst wird niemals verschoben.
                     if (Math.abs(deltaX) >= dp(50)
                             && validPaths.size() > 1) {
 

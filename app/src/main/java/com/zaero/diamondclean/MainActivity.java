@@ -54,6 +54,8 @@ public class MainActivity extends Activity {
     private static final String PREFS = "zaero_data";
     private static final String ERRORS = "errors";
     private static final String PROFI = "profi";
+    Privat statisch Finale Zeichenkette ANFAHREN_TEXT="anfahren_text";
+Privat statisch Finale Zeichenkette ABSTELLEN_TEXT="abstellen_text";
     private static final String MASTER = "C1B2A3Z";
 
     private static final int IMAGE_REQUEST = 5001;
@@ -680,82 +682,255 @@ public class MainActivity extends Activity {
         );
     }
 
-    private void showChapter(
-            String chapter
-    ) {
+private void showChapter(String chapter) {
 
-        clear();
+    clear();
 
-        content.setGravity(
-                Gravity.TOP |
-                        Gravity.CENTER_HORIZONTAL
+    content.setGravity(
+            Gravity.TOP |
+                    Gravity.CENTER_HORIZONTAL
+    );
+
+    TextView heading =
+            tv(
+                    chapter,
+                    28,
+                    GOLD,
+                    true
+            );
+
+    heading.setGravity(
+            Gravity.CENTER
+    );
+
+    content.addView(
+            heading,
+            new LinearLayout.LayoutParams(
+                    -1,
+                    dp(60)
+            )
+    );
+
+    String text;
+
+    if (chapter.equals("Anfahren")) {
+
+        text = getSharedPreferences(
+                PREFS,
+                MODE_PRIVATE
+        ).getString(
+                ANFAHREN_TEXT,
+                "Hier kannst du später die genaue Anleitung zum sicheren Anfahren der Anlage eintragen."
         );
 
-        TextView heading =
-                tv(
-                        chapter,
-                        28,
-                        GOLD,
-                        true
-                );
+    } else {
 
-        heading.setGravity(
-                Gravity.CENTER
+        text = getSharedPreferences(
+                PREFS,
+                MODE_PRIVATE
+        ).getString(
+                ABSTELLEN_TEXT,
+                "Hier kannst du später die genaue Anleitung zum sicheren Abstellen der Anlage eintragen."
         );
-
-        content.addView(
-                heading,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        dp(60)
-                )
-        );
-
-        LinearLayout p =
-                panel();
-
-        String text;
-
-        if (chapter.equals("Anfahren")) {
-
-            text =
-                    "Hier wird beschrieben, wie die Anlage sicher gestartet wird.\n\n"
-                            + "Die genauen Arbeitsschritte können hier später ergänzt werden.";
-
-        } else {
-
-            text =
-                    "Hier wird beschrieben, wie die Anlage sicher heruntergefahren wird.\n\n"
-                            + "Die genauen Arbeitsschritte können hier später ergänzt werden.";
-        }
-
-        p.addView(
-                tv(
-                        text,
-                        16,
-                        TEXT,
-                        false
-                )
-        );
-
-        content.addView(
-                p,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
-
-        Button back =
-                btn("← Zurück");
-
-        back.setOnClickListener(
-                v -> showHome()
-        );
-
-        content.addView(back);
     }
 
+    LinearLayout box =
+            panel();
+
+    TextView textView =
+            tv(
+                    text,
+                    17,
+                    TEXT,
+                    false
+            );
+
+    textView.setPadding(
+            dp(6),
+            dp(6),
+            dp(6),
+            dp(6)
+    );
+
+    box.addView(
+            textView,
+            new LinearLayout.LayoutParams(
+                    -1,
+                    -2
+            )
+    );
+
+    content.addView(
+            box,
+            new LinearLayout.LayoutParams(
+                    -1,
+                    -2
+            )
+    );
+
+    if (profi) {
+
+        addSpace(12);
+
+        Button edit =
+                btn("✎ " + chapter + " bearbeiten");
+
+        edit.setOnClickListener(
+                v -> editChapter(
+                        chapter
+                )
+        );
+
+        content.addView(edit);
+    }
+
+    addSpace(8);
+
+    Button back =
+            btn("← Zurück");
+
+    back.setOnClickListener(
+            v -> showHome()
+    );
+
+    content.addView(back);
+}
+private void editChapter(String chapter) {
+
+    String oldText;
+
+    if (chapter.equals("Anfahren")) {
+
+        oldText = getSharedPreferences(
+                PREFS,
+                MODE_PRIVATE
+        ).getString(
+                ANFAHREN_TEXT,
+                "Hier kannst du später die genaue Anleitung zum sicheren Anfahren der Anlage eintragen."
+        );
+
+    } else {
+
+        oldText = getSharedPreferences(
+                PREFS,
+                MODE_PRIVATE
+        ).getString(
+                ABSTELLEN_TEXT,
+                "Hier kannst du später die genaue Anleitung zum sicheren Abstellen der Anlage eintragen."
+        );
+    }
+
+    EditText input =
+            new EditText(this);
+
+    input.setText(oldText);
+    input.setTextColor(TEXT);
+    input.setTextSize(16);
+    input.setGravity(
+            Gravity.TOP
+    );
+
+    input.setSingleLine(false);
+    input.setMinLines(8);
+
+    input.setPadding(
+            dp(12),
+            dp(12),
+            dp(12),
+            dp(12)
+    );
+
+    input.setBackground(
+            bg(
+                    PANEL2,
+                    10,
+                    GOLD
+            )
+    );
+
+    AlertDialog dialog =
+            new AlertDialog.Builder(this)
+                    .setTitle(
+                            chapter + " bearbeiten"
+                    )
+                    .setView(input)
+                    .setNegativeButton(
+                            "Abbrechen",
+                            null
+                    )
+                    .setPositiveButton(
+                            "Speichern",
+                            null
+                    )
+                    .create();
+
+    dialog.setOnShowListener(
+            d -> {
+
+                dialog.getButton(
+                        AlertDialog.BUTTON_POSITIVE
+                ).setOnClickListener(
+                        v -> {
+
+                            String newText =
+                                    input.getText()
+                                            .toString()
+                                            .trim();
+
+                            if (newText.isEmpty()) {
+
+                                Toast.makeText(
+                                        this,
+                                        "Der Text darf nicht leer sein.",
+                                        Toast.LENGTH_SHORT
+                                ).show();
+
+                                return;
+                            }
+
+                            if (
+                                    chapter.equals(
+                                            "Anfahren"
+                                    )
+                            ) {
+
+                                getSharedPreferences(
+                                        PREFS,
+                                        MODE_PRIVATE
+                                )
+                                        .edit()
+                                        .putString(
+                                                ANFAHREN_TEXT,
+                                                newText
+                                        )
+                                        .apply();
+
+                            } else {
+
+                                getSharedPreferences(
+                                        PREFS,
+                                        MODE_PRIVATE
+                                )
+                                        .edit()
+                                        .putString(
+                                                ABSTELLEN_TEXT,
+                                                newText
+                                        )
+                                        .apply();
+                            }
+
+                            dialog.dismiss();
+
+                            showChapter(
+                                    chapter
+                            );
+                        }
+                );
+            }
+    );
+
+    dialog.show();
+}
     /*
      * FEHLERSUCHE
      *

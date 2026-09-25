@@ -102,7 +102,6 @@ public class MainActivity extends Activity {
                 new ScrollView(this);
 
         scroll.setFillViewport(true);
-
         scroll.setBackgroundColor(BG);
 
         content =
@@ -731,20 +730,36 @@ public class MainActivity extends Activity {
                         )
                 );
 
-                TextView cause =
+                TextView causeLabel =
                         text(
-                                "Ursache: " + item.cause,
+                                "URSACHE:",
                                 14,
-                                MUTED,
-                                false
+                                GOLD,
+                                true
                         );
 
-                cause.setPadding(
+                causeLabel.setPadding(
                         0,
-                        dp(6),
+                        dp(8),
                         0,
-                        0
+                        dp(2)
                 );
+
+                card.addView(
+                        causeLabel,
+                        new LinearLayout.LayoutParams(
+                                -1,
+                                -2
+                        )
+                );
+
+                TextView cause =
+                        text(
+                                item.cause,
+                                15,
+                                TEXT,
+                                false
+                        );
 
                 card.addView(
                         cause,
@@ -754,20 +769,36 @@ public class MainActivity extends Activity {
                         )
                 );
 
+                TextView solutionLabel =
+                        text(
+                                "LÖSUNG:",
+                                14,
+                                GOLD,
+                                true
+                        );
+
+                solutionLabel.setPadding(
+                        0,
+                        dp(10),
+                        0,
+                        dp(2)
+                );
+
+                card.addView(
+                        solutionLabel,
+                        new LinearLayout.LayoutParams(
+                                -1,
+                                -2
+                        )
+                );
+
                 TextView solution =
                         text(
-                                "Lösung: " + item.solution,
+                                item.solution,
                                 15,
                                 TEXT,
                                 false
                         );
-
-                solution.setPadding(
-                        0,
-                        dp(6),
-                        0,
-                        0
-                );
 
                 card.addView(
                         solution,
@@ -993,20 +1024,52 @@ public class MainActivity extends Activity {
                         )
                 );
 
+                TextView causeLabel =
+                        text(
+                                "URSACHE:",
+                                14,
+                                GOLD,
+                                true
+                        );
+
+                causeLabel.setPadding(
+                        0,
+                        dp(8),
+                        0,
+                        dp(2)
+                );
+
+                card.addView(causeLabel);
+
                 card.addView(
                         text(
-                                "Ursache: "
-                                        + item.cause,
-                                14,
-                                MUTED,
+                                item.cause,
+                                15,
+                                TEXT,
                                 false
                         )
                 );
 
+                TextView solutionLabel =
+                        text(
+                                "LÖSUNG:",
+                                14,
+                                GOLD,
+                                true
+                        );
+
+                solutionLabel.setPadding(
+                        0,
+                        dp(10),
+                        0,
+                        dp(2)
+                );
+
+                card.addView(solutionLabel);
+
                 card.addView(
                         text(
-                                "Lösung: "
-                                        + item.solution,
+                                item.solution,
                                 15,
                                 TEXT,
                                 false
@@ -1567,7 +1630,6 @@ public class MainActivity extends Activity {
             }
 
             input.close();
-
             output.close();
 
             return file.getAbsolutePath();
@@ -1878,8 +1940,37 @@ public class MainActivity extends Activity {
                     }
                 }
 
-                errors.add(item);
+                boolean duplicate = false;
+
+                for (
+                        ErrorItem existing :
+                        errors
+                ) {
+
+                    if (
+                            existing.title.equals(
+                                    item.title
+                            )
+                                    && existing.cause.equals(
+                                    item.cause
+                            )
+                                    && existing.solution.equals(
+                                    item.solution
+                            )
+                    ) {
+
+                        duplicate = true;
+                        break;
+                    }
+                }
+
+                if (!duplicate) {
+
+                    errors.add(item);
+                }
             }
+
+            saveErrors();
 
         } catch (Exception e) {
 

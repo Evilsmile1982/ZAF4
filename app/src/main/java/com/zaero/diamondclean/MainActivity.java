@@ -215,7 +215,7 @@ public class MainActivity extends Activity {
 
         FrameLayout brandWrap = new FrameLayout(this);
 
-        TextView brand = tv("Z-Aero Diamond Clean", 30, TEXT, true);
+        TextView brand = tv("Z-Aero Diamond Clean ◆", 30, TEXT, true);
         brand.setGravity(Gravity.CENTER);
         brandWrap.addView(brand,
                 new FrameLayout.LayoutParams(-1, -2));
@@ -232,44 +232,6 @@ public class MainActivity extends Activity {
         brandSet.addAnimation(brandSlide);
         brandSet.addAnimation(brandFade);
         brand.startAnimation(brandSet);
-
-        // Diamant-Funkel: wandert einmal über den Schriftzug
-        // und bleibt am Ende von "Clean" als Diamant stehen.
-        TextView sparkle = tv("✦", 20, GOLD, true);
-        sparkle.setGravity(Gravity.CENTER);
-
-        FrameLayout.LayoutParams sparkleParams =
-                new FrameLayout.LayoutParams(dp(34), dp(34));
-        sparkleParams.gravity = Gravity.CENTER;
-        brandWrap.addView(sparkle, sparkleParams);
-
-        TranslateAnimation sparkleMove = new TranslateAnimation(
-                -dp(150), dp(150), 0, 0);
-        sparkleMove.setDuration(2000);
-
-        AlphaAnimation sparkleIn = new AlphaAnimation(0f, 1f);
-        sparkleIn.setDuration(180);
-
-        AnimationSet sparkleSet = new AnimationSet(true);
-        sparkleSet.addAnimation(sparkleMove);
-        sparkleSet.addAnimation(sparkleIn);
-        sparkleSet.setAnimationListener(new AnimationSet.AnimationListener() {
-            @Override
-            public void onAnimationStart(android.view.animation.Animation animation) {
-            }
-
-            @Override
-            public void onAnimationEnd(android.view.animation.Animation animation) {
-                // Am Ende bleibt der Reflex als kleiner Diamant sichtbar.
-                sparkle.setText("◆");
-                sparkle.setAlpha(1f);
-            }
-
-            @Override
-            public void onAnimationRepeat(android.view.animation.Animation animation) {
-            }
-        });
-        sparkle.startAnimation(sparkleSet);
 
         home.addView(brandWrap,
                 new LinearLayout.LayoutParams(-1, dp(48)));

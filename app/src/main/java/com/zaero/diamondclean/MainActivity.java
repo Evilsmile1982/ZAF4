@@ -1,76 +1,119 @@
 package com.zaero.diamondclean;
 
-import android.app.*;
-import android.content.*;
-import android.graphics.*;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.*;
+import android.text.Editable;
 import android.text.InputType;
-import android.view.*;
-import android.view.animation.*;
-import android.widget.*;
+import android.text.TextWatcher;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Locale;
 
 public class MainActivity extends Activity {
 
-    private static final int GOLD = Color.rgb(214,168,79);
-    private static final int BG = Color.rgb(12,12,14);
-    private static final int PANEL = Color.rgb(28,27,30);
-    private static final int PANEL2 = Color.rgb(40,38,42);
-    private static final int TEXT = Color.rgb(245,242,235);
-    private static final int MUTED = Color.rgb(180,175,168);
-    private static final int RED = Color.rgb(220,30,35);
-    private static final int GREEN = Color.rgb(30,220,70);
+    private static final int GOLD = Color.rgb(214, 168, 79);
+    private static final int BG = Color.rgb(12, 12, 14);
+    private static final int PANEL = Color.rgb(28, 27, 30);
+    private static final int PANEL2 = Color.rgb(40, 38, 42);
+    private static final int TEXT = Color.rgb(245, 242, 235);
+    private static final int MUTED = Color.rgb(180, 175, 168);
+
+    private static final int RED = Color.rgb(220, 30, 35);
+    private static final int GREEN = Color.rgb(30, 220, 70);
 
     private static final String PREFS = "zaero_data";
     private static final String ERRORS = "errors";
     private static final String PROFI = "profi";
     private static final String MASTER = "C1B2A3Z";
+
     private static final int IMAGE_REQUEST = 5001;
 
-    private LinearLayout root, content;
-    private boolean profi;
+    private LinearLayout root;
+    private LinearLayout content;
+
+    private boolean profi = false;
     private int editingIndex = -1;
+
+    private EditText searchField;
+    private LinearLayout searchResults;
 
     private final ArrayList<ErrorItem> errorList =
             new ArrayList<>();
 
     @Override
-    protected void onCreate(Bundle b) {
-        super.onCreate(b);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-        profi = getSharedPreferences(PREFS, MODE_PRIVATE)
-                .getBoolean(PROFI, false);
+        profi = getSharedPreferences(
+                PREFS,
+                MODE_PRIVATE
+        ).getBoolean(
+                PROFI,
+                false
+        );
 
         loadErrors();
+
         buildBase();
         showHome();
     }
 
-    private int dp(int n) {
-        return (int)(n * getResources().getDisplayMetrics().density + .5f);
+    private int dp(int value) {
+        return (int) (
+                value *
+                        getResources()
+                                .getDisplayMetrics()
+                                .density
+                        + 0.5f
+        );
     }
 
     private TextView tv(
-            String s,
+            String text,
             float size,
             int color,
-            boolean bold) {
+            boolean bold
+    ) {
 
-        TextView v = new TextView(this);
-        v.setText(s);
+        TextView v =
+                new TextView(this);
+
+        v.setText(text);
         v.setTextSize(size);
         v.setTextColor(color);
         v.setGravity(Gravity.CENTER_VERTICAL);
 
-        if (bold)
-            v.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        if (bold) {
+            v.setTypeface(
+                    Typeface.DEFAULT,
+                    Typeface.BOLD
+            );
+        }
 
         return v;
     }
@@ -78,618 +121,1391 @@ public class MainActivity extends Activity {
     private GradientDrawable bg(
             int color,
             int radius,
-            int stroke) {
+            int stroke
+    ) {
 
-        GradientDrawable g = new GradientDrawable();
+        GradientDrawable g =
+                new GradientDrawable();
+
         g.setColor(color);
         g.setCornerRadius(dp(radius));
 
-        if (stroke != Color.TRANSPARENT)
-            g.setStroke(dp(1), stroke);
+        if (stroke != Color.TRANSPARENT) {
+            g.setStroke(
+                    dp(1),
+                    stroke
+            );
+        }
 
         return g;
     }
 
-    private Button btn(String s) {
+    private Button btn(String text) {
 
-        Button b = new Button(this);
-        b.setText(s);
+        Button b =
+                new Button(this);
+
+        b.setText(text);
         b.setTextColor(TEXT);
         b.setTextSize(15);
         b.setAllCaps(false);
-        b.setBackground(bg(PANEL2,10,Color.TRANSPARENT));
+        b.setBackground(
+                bg(
+                        PANEL2,
+                        10,
+                        Color.TRANSPARENT
+                )
+        );
 
         LinearLayout.LayoutParams p =
-                new LinearLayout.LayoutParams(-1,dp(52));
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(52)
+                );
 
         p.bottomMargin = dp(8);
+
         b.setLayoutParams(p);
 
         return b;
     }
 
-    private Button smallBtn(String s) {
+    private Button smallBtn(String text) {
 
-        Button b = new Button(this);
-        b.setText(s);
+        Button b =
+                new Button(this);
+
+        b.setText(text);
         b.setTextColor(GOLD);
         b.setTextSize(20);
         b.setAllCaps(false);
-        b.setBackground(bg(PANEL,10,Color.TRANSPARENT));
+        b.setBackground(
+                bg(
+                        PANEL,
+                        10,
+                        Color.TRANSPARENT
+                )
+        );
 
         return b;
     }
 
     private LinearLayout panel() {
 
-        LinearLayout p = new LinearLayout(this);
-        p.setOrientation(LinearLayout.VERTICAL);
-        p.setPadding(dp(16),dp(16),dp(16),dp(16));
-        p.setBackground(bg(PANEL,12,Color.TRANSPARENT));
+        LinearLayout p =
+                new LinearLayout(this);
+
+        p.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
+        p.setPadding(
+                dp(16),
+                dp(16),
+                dp(16),
+                dp(16)
+        );
+
+        p.setBackground(
+                bg(
+                        PANEL,
+                        12,
+                        Color.TRANSPARENT
+                )
+        );
 
         return p;
     }
 
     private void buildBase() {
 
-        root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
+        root =
+                new LinearLayout(this);
+
+        root.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
         root.setBackgroundColor(BG);
 
         setContentView(root);
 
-        LinearLayout header = new LinearLayout(this);
-        header.setOrientation(LinearLayout.HORIZONTAL);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setPadding(dp(12),dp(8),dp(12),dp(8));
-        header.setBackgroundColor(Color.rgb(18,17,19));
+        LinearLayout header =
+                new LinearLayout(this);
 
-        Button menu = smallBtn("☰");
-        menu.setOnClickListener(v -> showMenu());
+        header.setOrientation(
+                LinearLayout.HORIZONTAL
+        );
 
-        header.addView(menu,
-                new LinearLayout.LayoutParams(dp(52),dp(52)));
+        header.setGravity(
+                Gravity.CENTER_VERTICAL
+        );
 
-        TextView title = tv("Z.AERO",21,GOLD,true);
-        title.setGravity(Gravity.CENTER);
+        header.setPadding(
+                dp(12),
+                dp(8),
+                dp(12),
+                dp(8)
+        );
 
-        header.addView(title,
+        header.setBackgroundColor(
+                Color.rgb(18, 17, 19)
+        );
+
+        Button menu =
+                smallBtn("☰");
+
+        menu.setOnClickListener(
+                v -> showMenu()
+        );
+
+        header.addView(
+                menu,
                 new LinearLayout.LayoutParams(
-                        0,dp(52),1));
+                        dp(52),
+                        dp(52)
+                )
+        );
+
+        TextView title =
+                tv(
+                        "Z.AERO",
+                        21,
+                        GOLD,
+                        true
+                );
+
+        title.setGravity(
+                Gravity.CENTER
+        );
+
+        header.addView(
+                title,
+                new LinearLayout.LayoutParams(
+                        0,
+                        dp(52),
+                        1
+                )
+        );
 
         TextView user =
-                tv(profi ? "PROFI" : "BENUTZER",
-                        12,TEXT,false);
+                tv(
+                        profi
+                                ? "PROFI"
+                                : "BENUTZER",
+                        12,
+                        TEXT,
+                        false
+                );
 
-        user.setGravity(Gravity.CENTER);
+        user.setGravity(
+                Gravity.CENTER
+        );
 
-        header.addView(user,
+        header.addView(
+                user,
                 new LinearLayout.LayoutParams(
-                        dp(82),dp(52)));
+                        dp(82),
+                        dp(52)
+                )
+        );
 
-        root.addView(header,
+        root.addView(
+                header,
                 new LinearLayout.LayoutParams(
-                        -1,dp(68)));
+                        -1,
+                        dp(68)
+                )
+        );
 
-        ScrollView scroll = new ScrollView(this);
+        ScrollView scroll =
+                new ScrollView(this);
+
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(BG);
 
-        content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setGravity(Gravity.CENTER_HORIZONTAL);
-        content.setPadding(dp(18),dp(18),dp(18),dp(30));
+        content =
+                new LinearLayout(this);
 
-        scroll.addView(content,
-                new ScrollView.LayoutParams(-1,-1));
+        content.setOrientation(
+                LinearLayout.VERTICAL
+        );
 
-        root.addView(scroll,
+        content.setGravity(
+                Gravity.CENTER_HORIZONTAL
+        );
+
+        content.setPadding(
+                dp(18),
+                dp(18),
+                dp(18),
+                dp(30)
+        );
+
+        scroll.addView(
+                content,
+                new ScrollView.LayoutParams(
+                        -1,
+                        -1
+                )
+        );
+
+        root.addView(
+                scroll,
                 new LinearLayout.LayoutParams(
-                        -1,0,1));
+                        -1,
+                        0,
+                        1
+                )
+        );
     }
 
     private void clear() {
+
         content.removeAllViews();
+
+        searchField = null;
+        searchResults = null;
     }
 
     private void showHome() {
 
         clear();
-        content.setGravity(Gravity.CENTER);
 
-        LinearLayout home = new LinearLayout(this);
-        home.setOrientation(LinearLayout.VERTICAL);
-        home.setGravity(Gravity.CENTER_HORIZONTAL);
+        content.setGravity(
+                Gravity.CENTER
+        );
+
+        LinearLayout home =
+                new LinearLayout(this);
+
+        home.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
+        home.setGravity(
+                Gravity.CENTER_HORIZONTAL
+        );
 
         TextView welcome =
-                tv("Willkommen bei",22,GOLD,true);
-        welcome.setGravity(Gravity.CENTER);
+                tv(
+                        "Willkommen bei",
+                        22,
+                        GOLD,
+                        true
+                );
 
-        home.addView(welcome,
-                new LinearLayout.LayoutParams(-1,-2));
+        welcome.setGravity(
+                Gravity.CENTER
+        );
+
+        home.addView(
+                welcome,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
         TextView brand =
-                tv("Z-Aero Diamond Clean",30,TEXT,true);
-        brand.setGravity(Gravity.CENTER);
+                tv(
+                        "Z-Aero Diamond Clean",
+                        30,
+                        TEXT,
+                        true
+                );
 
-        home.addView(brand,
-                new LinearLayout.LayoutParams(-1,-2));
+        brand.setGravity(
+                Gravity.CENTER
+        );
 
-        AnimationSet set = new AnimationSet(true);
+        home.addView(
+                brand,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
         TranslateAnimation slide =
                 new TranslateAnimation(
-                        -dp(280),0,0,0);
+                        -dp(280),
+                        0,
+                        0,
+                        0
+                );
 
         slide.setDuration(850);
 
         AlphaAnimation fade =
-                new AlphaAnimation(0f,1f);
+                new AlphaAnimation(
+                        0f,
+                        1f
+                );
 
         fade.setDuration(850);
 
+        AnimationSet set =
+                new AnimationSet(true);
+
         set.addAnimation(slide);
         set.addAnimation(fade);
+
         brand.startAnimation(set);
 
-        TextView sub =
-                tv("Ihre Unterstützung für den sicheren und effizienten Betrieb der Anlage.",
-                        15,MUTED,false);
+        TextView subtitle =
+                tv(
+                        "Ihre Unterstützung für den sicheren und effizienten Betrieb der Anlage.",
+                        15,
+                        MUTED,
+                        false
+                );
 
-        sub.setGravity(Gravity.CENTER);
-        sub.setPadding(dp(8),0,dp(8),dp(10));
+        subtitle.setGravity(
+                Gravity.CENTER
+        );
 
-        home.addView(sub,
-                new LinearLayout.LayoutParams(-1,-2));
+        subtitle.setPadding(
+                dp(8),
+                0,
+                dp(8),
+                dp(10)
+        );
 
-        ImageView machine = new ImageView(this);
-        machine.setImageResource(R.drawable.machine);
-        machine.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        home.addView(
+                subtitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+
+        ImageView machine =
+                new ImageView(this);
+
+        machine.setImageResource(
+                R.drawable.machine
+        );
+
+        machine.setScaleType(
+                ImageView.ScaleType.CENTER_INSIDE
+        );
+
         machine.setAdjustViewBounds(true);
 
-        LinearLayout.LayoutParams ip =
-                new LinearLayout.LayoutParams(-1,dp(205));
+        LinearLayout.LayoutParams imageParams =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(205)
+                );
 
-        ip.bottomMargin = dp(12);
+        imageParams.bottomMargin =
+                dp(12);
 
-        home.addView(machine,ip);
+        home.addView(
+                machine,
+                imageParams
+        );
 
-        LinearLayout cards = new LinearLayout(this);
-        cards.setOrientation(LinearLayout.HORIZONTAL);
-        cards.setGravity(Gravity.CENTER);
+        LinearLayout cards =
+                new LinearLayout(this);
 
-        addHomeCard(cards,"▶","Anfahren",
+        cards.setOrientation(
+                LinearLayout.HORIZONTAL
+        );
+
+        cards.setGravity(
+                Gravity.CENTER
+        );
+
+        addHomeCard(
+                cards,
+                "▶",
+                "Anfahren",
                 "Anlage starten",
-                v -> showChapter("Anfahren"));
+                v -> showChapter("Anfahren")
+        );
 
-        addHomeCard(cards,"■","Abstellen",
+        addHomeCard(
+                cards,
+                "■",
+                "Abstellen",
                 "Anlage sicher\nherunterfahren",
-                v -> showChapter("Abstellen"));
+                v -> showChapter("Abstellen")
+        );
 
-        addHomeCard(cards,"⌕","Fehlersuche",
+        addHomeCard(
+                cards,
+                "⌕",
+                "Fehlersuche",
                 "Fehler und\nLösungen",
-                v -> showTroubleshooting());
+                v -> showTroubleshooting()
+        );
 
-        home.addView(cards,
-                new LinearLayout.LayoutParams(-1,-2));
+        home.addView(
+                cards,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
-        content.addView(home,
-                new LinearLayout.LayoutParams(-1,-2));
+        content.addView(
+                home,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
     }
 
     private void addHomeCard(
             LinearLayout parent,
             String icon,
             String title,
-            String sub,
-            View.OnClickListener click) {
+            String subtitle,
+            View.OnClickListener listener
+    ) {
 
-        LinearLayout c = new LinearLayout(this);
-        c.setOrientation(LinearLayout.VERTICAL);
-        c.setGravity(Gravity.CENTER);
-        c.setPadding(dp(8),dp(10),dp(8),dp(10));
-        c.setBackground(bg(PANEL,12,GOLD));
-        c.setOnClickListener(click);
+        LinearLayout card =
+                new LinearLayout(this);
 
-        TextView i = tv(icon,25,GOLD,true);
-        i.setGravity(Gravity.CENTER);
+        card.setOrientation(
+                LinearLayout.VERTICAL
+        );
 
-        c.addView(i,
-                new LinearLayout.LayoutParams(-1,dp(34)));
+        card.setGravity(
+                Gravity.CENTER
+        );
 
-        TextView t = tv(title,16,TEXT,true);
-        t.setGravity(Gravity.CENTER);
+        card.setPadding(
+                dp(8),
+                dp(10),
+                dp(8),
+                dp(10)
+        );
 
-        c.addView(t,
-                new LinearLayout.LayoutParams(-1,-2));
+        card.setBackground(
+                bg(
+                        PANEL,
+                        12,
+                        GOLD
+                )
+        );
 
-        TextView s = tv(sub,11,MUTED,false);
-        s.setGravity(Gravity.CENTER);
+        card.setOnClickListener(listener);
 
-        c.addView(s,
-                new LinearLayout.LayoutParams(-1,dp(34)));
+        TextView iconView =
+                tv(
+                        icon,
+                        25,
+                        GOLD,
+                        true
+                );
 
-        LinearLayout.LayoutParams p =
+        iconView.setGravity(
+                Gravity.CENTER
+        );
+
+        card.addView(
+                iconView,
                 new LinearLayout.LayoutParams(
-                        0,dp(112),1);
+                        -1,
+                        dp(34)
+                )
+        );
 
-        p.setMargins(dp(4),0,dp(4),0);
+        TextView titleView =
+                tv(
+                        title,
+                        16,
+                        TEXT,
+                        true
+                );
 
-        parent.addView(c,p);
+        titleView.setGravity(
+                Gravity.CENTER
+        );
+
+        card.addView(
+                titleView,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+
+        TextView subtitleView =
+                tv(
+                        subtitle,
+                        11,
+                        MUTED,
+                        false
+                );
+
+        subtitleView.setGravity(
+                Gravity.CENTER
+        );
+
+        card.addView(
+                subtitleView,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(34)
+                )
+        );
+
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(
+                        0,
+                        dp(112),
+                        1
+                );
+
+        params.setMargins(
+                dp(4),
+                0,
+                dp(4),
+                0
+        );
+
+        parent.addView(
+                card,
+                params
+        );
     }
 
-    private void showChapter(String chapter) {
+    private void showChapter(
+            String chapter
+    ) {
 
         clear();
 
-        TextView h = tv(chapter,28,GOLD,true);
-        h.setGravity(Gravity.CENTER);
+        content.setGravity(
+                Gravity.TOP |
+                        Gravity.CENTER_HORIZONTAL
+        );
 
-        content.addView(h,
-                new LinearLayout.LayoutParams(-1,dp(60)));
+        TextView heading =
+                tv(
+                        chapter,
+                        28,
+                        GOLD,
+                        true
+                );
 
-        LinearLayout p = panel();
+        heading.setGravity(
+                Gravity.CENTER
+        );
+
+        content.addView(
+                heading,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(60)
+                )
+        );
+
+        LinearLayout p =
+                panel();
 
         String text;
 
         if (chapter.equals("Anfahren")) {
+
             text =
                     "Hier wird beschrieben, wie die Anlage sicher gestartet wird.\n\n"
-                    + "Die genauen Arbeitsschritte können hier später ergänzt werden.";
+                            + "Die genauen Arbeitsschritte können hier später ergänzt werden.";
+
         } else {
+
             text =
                     "Hier wird beschrieben, wie die Anlage sicher heruntergefahren wird.\n\n"
-                    + "Die genauen Arbeitsschritte können hier später ergänzt werden.";
+                            + "Die genauen Arbeitsschritte können hier später ergänzt werden.";
         }
 
-        p.addView(tv(text,16,TEXT,false));
+        p.addView(
+                tv(
+                        text,
+                        16,
+                        TEXT,
+                        false
+                )
+        );
 
-        content.addView(p,
-                new LinearLayout.LayoutParams(-1,-2));
+        content.addView(
+                p,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
-        Button back = btn("← Zurück");
-        back.setOnClickListener(v -> showHome());
+        Button back =
+                btn("← Zurück");
+
+        back.setOnClickListener(
+                v -> showHome()
+        );
+
         content.addView(back);
     }
 
-    private LinearLayout borderBox(int color) {
-
-        LinearLayout b = new LinearLayout(this);
-        b.setOrientation(LinearLayout.VERTICAL);
-        b.setBackground(bg(Color.BLACK,8,color));
-        b.setPadding(dp(4),dp(4),dp(4),dp(4));
-
-        return b;
-    }
-
+    /*
+     * FEHLERSUCHE
+     *
+     * Beim Öffnen werden KEINE Fehler angezeigt.
+     * Erst ab 3 Buchstaben werden Treffer eingeblendet.
+     */
     private void showTroubleshooting() {
 
         clear();
 
-        TextView h = tv("Fehlersuche",28,GOLD,true);
-        h.setGravity(Gravity.CENTER);
+        content.setGravity(
+                Gravity.TOP |
+                        Gravity.CENTER_HORIZONTAL
+        );
 
-        content.addView(h,
-                new LinearLayout.LayoutParams(-1,dp(60)));
+        TextView heading =
+                tv(
+                        "Fehlersuche",
+                        28,
+                        GOLD,
+                        true
+                );
 
-        Button search = btn("⌕ Fehler suchen");
-        search.setOnClickListener(v -> showSearch());
-        content.addView(search);
+        heading.setGravity(
+                Gravity.CENTER
+        );
 
-        if (errorList.isEmpty()) {
+        content.addView(
+                heading,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(60)
+                )
+        );
 
-            TextView empty =
-                    tv("Noch keine Fehler hinterlegt.",
-                            16,MUTED,false);
+        searchField =
+                new EditText(this);
 
-            empty.setGravity(Gravity.CENTER);
+        searchField.setHint(
+                "⌕ Fehler suchen"
+        );
 
-            content.addView(empty,
-                    new LinearLayout.LayoutParams(
-                            -1,dp(70)));
+        searchField.setTextColor(TEXT);
+        searchField.setHintTextColor(TEXT);
+        searchField.setTextSize(17);
+        searchField.setSingleLine(true);
 
-        } else {
+        searchField.setPadding(
+                dp(18),
+                dp(8),
+                dp(18),
+                dp(8)
+        );
 
-            for (int i=0;i<errorList.size();i++) {
+        searchField.setBackground(
+                bg(
+                        PANEL2,
+                        14,
+                        Color.TRANSPARENT
+                )
+        );
 
-                final int index = i;
-                ErrorItem item = errorList.get(i);
+        content.addView(
+                searchField,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(60)
+                )
+        );
 
-                LinearLayout card = panel();
+        addSpace(12);
 
-                // ROTER FEHLERBEREICH
-                LinearLayout errorBox =
-                        borderBox(RED);
+        searchResults =
+                new LinearLayout(this);
 
-                TextView errorTitle =
-                        tv(item.title,20,GOLD,true);
+        searchResults.setOrientation(
+                LinearLayout.VERTICAL
+        );
 
-                errorTitle.setGravity(Gravity.CENTER);
+        content.addView(
+                searchResults,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
-                errorBox.addView(errorTitle,
-                        new LinearLayout.LayoutParams(
-                                -1,dp(58)));
+        searchField.addTextChangedListener(
+                new TextWatcher() {
 
-                card.addView(errorBox);
+                    @Override
+                    public void beforeTextChanged(
+                            CharSequence s,
+                            int start,
+                            int count,
+                            int after
+                    ) {
+                    }
 
-                // URSACHE
-                TextView causeLabel =
-                        tv("URSACHE:",14,GOLD,true);
+                    @Override
+                    public void onTextChanged(
+                            CharSequence s,
+                            int start,
+                            int before,
+                            int count
+                    ) {
 
-                causeLabel.setPadding(
-                        0,dp(12),0,dp(2));
+                        updateSearchResults(
+                                s.toString()
+                        );
+                    }
 
-                card.addView(causeLabel);
-
-                card.addView(
-                        tv(item.cause,15,TEXT,false));
-
-                // GRÜNER LÖSUNGSBEREICH
-                LinearLayout solutionBox =
-                        borderBox(GREEN);
-
-                TextView solutionLabel =
-                        tv("LÖSUNG:",14,GREEN,true);
-
-                solutionLabel.setPadding(
-                        dp(10),dp(8),dp(10),dp(2));
-
-                solutionBox.addView(solutionLabel);
-
-                TextView solution =
-                        tv(item.solution,15,TEXT,false);
-
-                solution.setPadding(
-                        dp(10),dp(2),dp(10),dp(10));
-
-                solutionBox.addView(solution);
-
-                LinearLayout.LayoutParams sp =
-                        new LinearLayout.LayoutParams(-1,-2);
-
-                sp.topMargin = dp(12);
-
-                card.addView(solutionBox,sp);
-
-                // BILDER
-                addImages(card,item.images);
-
-                if (profi) {
-
-                    Button edit =
-                            btn("✎ Bearbeiten");
-
-                    edit.setOnClickListener(
-                            v -> showEditError(index));
-
-                    card.addView(edit);
+                    @Override
+                    public void afterTextChanged(
+                            Editable s
+                    ) {
+                    }
                 }
-
-                content.addView(card,
-                        new LinearLayout.LayoutParams(
-                                -1,-2));
-
-                addSpace(8);
-            }
-        }
+        );
 
         if (profi) {
 
+            addSpace(12);
+
             Button add =
-                    btn("+ Fehler hinzufügen");
+                    btn(
+                            "+ Fehler hinzufügen"
+                    );
 
             add.setOnClickListener(
-                    v -> showEditError(-1));
+                    v -> showEditError(-1)
+            );
 
             content.addView(add);
         }
 
-        Button back = btn("← Zurück");
-        back.setOnClickListener(v -> showHome());
+        addSpace(8);
+
+        Button back =
+                btn("← Zurück");
+
+        back.setOnClickListener(
+                v -> showHome()
+        );
+
         content.addView(back);
     }
 
-    private void addImages(
-            LinearLayout card,
-            ArrayList<String> images) {
+    private void updateSearchResults(
+            String input
+    ) {
 
-        for (String path : images) {
+        if (searchResults == null)
+            return;
 
-            File f = new File(path);
+        searchResults.removeAllViews();
 
-            if (!f.exists())
-                continue;
+        String q =
+                input
+                        .trim()
+                        .toLowerCase(
+                                Locale.GERMAN
+                        );
 
-            ImageView image = new ImageView(this);
-            image.setImageURI(Uri.fromFile(f));
-            image.setScaleType(
-                    ImageView.ScaleType.CENTER_INSIDE);
-            image.setAdjustViewBounds(true);
-
-            LinearLayout.LayoutParams p =
-                    new LinearLayout.LayoutParams(
-                            -1,dp(170));
-
-            p.topMargin = dp(8);
-
-            card.addView(image,p);
+        /*
+         * Unter 3 Buchstaben:
+         * KEINE Fehler anzeigen.
+         */
+        if (q.length() < 3) {
+            return;
         }
-    }
-
-    private void showSearch() {
-
-        final EditText input = new EditText(this);
-
-        input.setHint("Mindestens 3 Buchstaben");
-        input.setSingleLine(true);
-        input.setTextColor(TEXT);
-        input.setHintTextColor(MUTED);
-
-        AlertDialog d =
-                new AlertDialog.Builder(this)
-                        .setTitle("Fehler suchen")
-                        .setView(input)
-                        .setNegativeButton(
-                                "Abbrechen",null)
-                        .setPositiveButton(
-                                "Suchen",null)
-                        .create();
-
-        d.setOnShowListener(x -> {
-
-            Button search =
-                    d.getButton(
-                            AlertDialog.BUTTON_POSITIVE);
-
-            search.setEnabled(false);
-
-            input.addTextChangedListener(
-                    new TextWatcher() {
-
-                        public void beforeTextChanged(
-                                CharSequence s,
-                                int a,int b,int c) {}
-
-                        public void onTextChanged(
-                                CharSequence s,
-                                int a,int b,int c) {
-
-                            search.setEnabled(
-                                    s.toString()
-                                            .trim()
-                                            .length() >= 3);
-                        }
-
-                        public void afterTextChanged(
-                                Editable e) {}
-                    });
-
-            search.setOnClickListener(v -> {
-
-                String q =
-                        input.getText()
-                                .toString()
-                                .trim()
-                                .toLowerCase(Locale.GERMAN);
-
-                d.dismiss();
-                showSearchResults(q);
-            });
-        });
-
-        d.show();
-    }
-
-    private void showSearchResults(String q) {
-
-        clear();
-
-        TextView h =
-                tv("Suchergebnisse",26,GOLD,true);
-
-        h.setGravity(Gravity.CENTER);
-
-        content.addView(h,
-                new LinearLayout.LayoutParams(-1,dp(58)));
 
         boolean found = false;
 
-        for (ErrorItem item : errorList) {
+        for (int i = 0;
+             i < errorList.size();
+             i++) {
+
+            ErrorItem item =
+                    errorList.get(i);
 
             String all =
-                    (item.title+" "+
-                     item.cause+" "+
-                     item.solution)
-                    .toLowerCase(Locale.GERMAN);
+                    (
+                            item.title
+                                    + " "
+                                    + item.cause
+                                    + " "
+                                    + item.solution
+                    ).toLowerCase(
+                            Locale.GERMAN
+                    );
 
             if (!all.contains(q))
                 continue;
 
             found = true;
 
-            LinearLayout card = panel();
+            addErrorCard(
+                    searchResults,
+                    item,
+                    i
+            );
 
-            LinearLayout errorBox =
-                    borderBox(RED);
-
-            TextView errorTitle =
-                    tv(item.title,20,GOLD,true);
-
-            errorTitle.setGravity(Gravity.CENTER);
-
-            errorBox.addView(errorTitle,
-                    new LinearLayout.LayoutParams(
-                            -1,dp(58)));
-
-            card.addView(errorBox);
-
-            TextView causeLabel =
-                    tv("URSACHE:",14,GOLD,true);
-
-            causeLabel.setPadding(
-                    0,dp(12),0,dp(2));
-
-            card.addView(causeLabel);
-
-            card.addView(
-                    tv(item.cause,15,TEXT,false));
-
-            LinearLayout solutionBox =
-                    borderBox(GREEN);
-
-            TextView solutionLabel =
-                    tv("LÖSUNG:",14,GREEN,true);
-
-            solutionLabel.setPadding(
-                    dp(10),dp(8),dp(10),dp(2));
-
-            solutionBox.addView(solutionLabel);
-
-            TextView solution =
-                    tv(item.solution,15,TEXT,false);
-
-            solution.setPadding(
-                    dp(10),dp(2),dp(10),dp(10));
-
-            solutionBox.addView(solution);
-
-            LinearLayout.LayoutParams sp =
-                    new LinearLayout.LayoutParams(-1,-2);
-
-            sp.topMargin = dp(12);
-
-            card.addView(solutionBox,sp);
-
-            addImages(card,item.images);
-
-            content.addView(card,
-                    new LinearLayout.LayoutParams(
-                            -1,-2));
-
-            addSpace(8);
+            addSpaceTo(
+                    searchResults,
+                    8
+            );
         }
 
         if (!found) {
 
             TextView none =
-                    tv("Kein passender Fehler gefunden.",
-                            16,MUTED,false);
+                    tv(
+                            "Kein passender Fehler gefunden.",
+                            16,
+                            MUTED,
+                            false
+                    );
 
-            none.setGravity(Gravity.CENTER);
+            none.setGravity(
+                    Gravity.CENTER
+            );
 
-            content.addView(none,
+            searchResults.addView(
+                    none,
                     new LinearLayout.LayoutParams(
-                            -1,dp(70)));
+                            -1,
+                            dp(70)
+                    )
+            );
         }
-
-        Button back = btn("← Zurück");
-        back.setOnClickListener(
-                v -> showTroubleshooting());
-
-        content.addView(back);
     }
 
-    private void showEditError(int index) {
+    private void addErrorCard(
+            LinearLayout parent,
+            ErrorItem item,
+            int index
+    ) {
+
+        LinearLayout card =
+                panel();
+
+        /*
+         * ROTER FEHLERBEREICH
+         */
+        LinearLayout errorBox =
+                borderBox(RED);
+
+        TextView errorTitle =
+                tv(
+                        item.title,
+                        20,
+                        GOLD,
+                        true
+                );
+
+        errorTitle.setGravity(
+                Gravity.CENTER
+        );
+
+        errorBox.addView(
+                errorTitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(58)
+                )
+        );
+
+        card.addView(errorBox);
+
+        /*
+         * URSACHE
+         */
+        TextView causeLabel =
+                tv(
+                        "URSACHE:",
+                        14,
+                        GOLD,
+                        true
+                );
+
+        causeLabel.setPadding(
+                0,
+                dp(12),
+                0,
+                dp(2)
+        );
+
+        card.addView(causeLabel);
+
+        TextView cause =
+                tv(
+                        item.cause,
+                        15,
+                        TEXT,
+                        false
+                );
+
+        card.addView(cause);
+
+        /*
+         * GRÜNER LÖSUNGSBEREICH
+         */
+        LinearLayout solutionBox =
+                borderBox(GREEN);
+
+        TextView solutionLabel =
+                tv(
+                        "LÖSUNG:",
+                        14,
+                        GREEN,
+                        true
+                );
+
+        solutionLabel.setPadding(
+                dp(10),
+                dp(8),
+                dp(10),
+                dp(2)
+        );
+
+        solutionBox.addView(
+                solutionLabel
+        );
+
+        TextView solution =
+                tv(
+                        item.solution,
+                        15,
+                        TEXT,
+                        false
+                );
+
+        solution.setPadding(
+                dp(10),
+                dp(2),
+                dp(10),
+                dp(10)
+        );
+
+        solutionBox.addView(
+                solution
+        );
+
+        LinearLayout.LayoutParams solutionParams =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                );
+
+        solutionParams.topMargin =
+                dp(12);
+
+        card.addView(
+                solutionBox,
+                solutionParams
+        );
+
+        /*
+         * BILDER
+         */
+        addImages(
+                card,
+                item.images
+        );
+
+        /*
+         * BEARBEITEN
+         */
+        if (profi) {
+
+            Button edit =
+                    btn("✎ Bearbeiten");
+
+            edit.setOnClickListener(
+                    v -> showEditError(index)
+            );
+
+            card.addView(edit);
+        }
+
+        parent.addView(
+                card,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+    }
+
+    private LinearLayout borderBox(
+            int color
+    ) {
+
+        LinearLayout box =
+                new LinearLayout(this);
+
+        box.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
+        box.setPadding(
+                dp(4),
+                dp(4),
+                dp(4),
+                dp(4)
+        );
+
+        box.setBackground(
+                bg(
+                        Color.BLACK,
+                        8,
+                        color
+                )
+        );
+
+        return box;
+    }
+
+    /*
+     * Bilder anzeigen
+     *
+     * Doppeltipp auf Bild:
+     * Großansicht mit Zoom.
+     */
+    private void addImages(
+            LinearLayout card,
+            ArrayList<String> images
+    ) {
+
+        for (String path : images) {
+
+            if (path == null ||
+                    path.isEmpty()) {
+                continue;
+            }
+
+            File file =
+                    new File(path);
+
+            if (!file.exists()) {
+                continue;
+            }
+
+            ImageView image =
+                    new ImageView(this);
+
+            image.setImageURI(
+                    Uri.fromFile(file)
+            );
+
+            image.setScaleType(
+                    ImageView.ScaleType.CENTER_INSIDE
+            );
+
+            image.setAdjustViewBounds(true);
+
+            image.setOnTouchListener(
+                    new View.OnTouchListener() {
+
+                        private long firstTapTime = 0;
+
+                        @Override
+                        public boolean onTouch(
+                                View v,
+                                MotionEvent event
+                        ) {
+
+                            if (
+                                    event.getAction()
+                                            == MotionEvent.ACTION_UP
+                            ) {
+
+                                long now =
+                                        System.currentTimeMillis();
+
+                                if (
+                                        now - firstTapTime
+                                                < 350
+                                ) {
+
+                                    showZoomImage(
+                                            file
+                                    );
+
+                                    firstTapTime = 0;
+
+                                } else {
+
+                                    firstTapTime = now;
+                                }
+                            }
+
+                            return true;
+                        }
+                    }
+            );
+
+            LinearLayout.LayoutParams p =
+                    new LinearLayout.LayoutParams(
+                            -1,
+                            dp(170)
+                    );
+
+            p.topMargin = dp(8);
+
+            card.addView(
+                    image,
+                    p
+            );
+        }
+    }
+
+    /*
+     * GROßANSICHT + ZOOM
+     */
+    private void showZoomImage(
+            File file
+    ) {
+
+        final Dialog dialog =
+                new Dialog(this);
+
+        dialog.getWindow();
+
+        LinearLayout background =
+                new LinearLayout(this);
+
+        background.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
+        background.setGravity(
+                Gravity.CENTER
+        );
+
+        background.setBackgroundColor(
+                Color.BLACK
+        );
+
+        ImageView image =
+                new ImageView(this);
+
+        image.setImageURI(
+                Uri.fromFile(file)
+        );
+
+        image.setScaleType(
+                ImageView.ScaleType.MATRIX
+        );
+
+        background.addView(
+                image,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        0,
+                        1
+                )
+        );
+
+        Button close =
+                new Button(this);
+
+        close.setText("Schließen");
+        close.setTextColor(TEXT);
+        close.setAllCaps(false);
+        close.setBackground(
+                bg(
+                        PANEL2,
+                        10,
+                        Color.TRANSPARENT
+                )
+        );
+
+        background.addView(
+                close,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(55)
+                )
+        );
+
+        close.setOnClickListener(
+                v -> dialog.dismiss()
+        );
+
+        dialog.setContentView(
+                background
+        );
+
+        if (dialog.getWindow() != null) {
+
+            dialog.getWindow()
+                    .setBackgroundDrawable(
+                            bg(
+                                    Color.BLACK,
+                                    0,
+                                    Color.TRANSPARENT
+                            )
+                    );
+
+            dialog.getWindow()
+                    .setLayout(
+                            -1,
+                            -1
+                    );
+        }
+
+        dialog.show();
+
+        if (dialog.getWindow() != null) {
+
+            dialog.getWindow()
+                    .setLayout(
+                            -1,
+                            -1
+                    );
+        }
+
+        ZoomTouchListener zoom =
+                new ZoomTouchListener(
+                        image
+                );
+
+        image.setOnTouchListener(
+                zoom
+        );
+    }
+
+    /*
+     * Zoom-Steuerung
+     */
+    private static class ZoomTouchListener
+            implements View.OnTouchListener {
+
+        private final ImageView image;
+
+        private final Matrix matrix =
+                new Matrix();
+
+        private final ScaleGestureDetector
+                scaleDetector;
+
+        private float lastX;
+        private float lastY;
+
+        private boolean moving = false;
+
+        ZoomTouchListener(
+                ImageView image
+        ) {
+
+            this.image = image;
+
+            scaleDetector =
+                    new ScaleGestureDetector(
+                            image.getContext(),
+                            new ScaleGestureDetector
+                                    .SimpleOnScaleGestureListener() {
+
+                                @Override
+                                public boolean
+                                onScale(
+                                        ScaleGestureDetector detector
+                                ) {
+
+                                    float scale =
+                                            detector
+                                                    .getScaleFactor();
+
+                                    matrix.postScale(
+                                            scale,
+                                            scale,
+                                            detector.getFocusX(),
+                                            detector.getFocusY()
+                                    );
+
+                                    image.setImageMatrix(
+                                            matrix
+                                    );
+
+                                    return true;
+                                }
+                            }
+                    );
+        }
+
+        @Override
+        public boolean onTouch(
+                View v,
+                MotionEvent event
+        ) {
+
+            scaleDetector
+                    .onTouchEvent(event);
+
+            switch (
+                    event.getActionMasked()
+            ) {
+
+                case MotionEvent.ACTION_DOWN:
+
+                    lastX = event.getX();
+                    lastY = event.getY();
+
+                    moving = true;
+
+                    return true;
+
+                case MotionEvent.ACTION_MOVE:
+
+                    if (
+                            moving &&
+                                    event.getPointerCount()
+                                            == 1
+                    ) {
+
+                        float dx =
+                                event.getX()
+                                        - lastX;
+
+                        float dy =
+                                event.getY()
+                                        - lastY;
+
+                        matrix.postTranslate(
+                                dx,
+                                dy
+                        );
+
+                        image.setImageMatrix(
+                                matrix
+                        );
+
+                        lastX = event.getX();
+                        lastY = event.getY();
+                    }
+
+                    return true;
+
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+
+                    moving = false;
+
+                    return true;
+            }
+
+            return true;
+        }
+    }
+
+    private void showEditError(
+            int index
+    ) {
 
         editingIndex = index;
 
@@ -697,10 +1513,13 @@ public class MainActivity extends Activity {
                 new LinearLayout(this);
 
         box.setOrientation(
-                LinearLayout.VERTICAL);
+                LinearLayout.VERTICAL
+        );
 
         EditText title =
-                edit("Fehlermeldung / Fehler");
+                edit(
+                        "Fehlermeldung / Fehler"
+                );
 
         EditText cause =
                 edit("Ursache");
@@ -714,156 +1533,217 @@ public class MainActivity extends Activity {
 
         if (index >= 0) {
 
-            ErrorItem e = errorList.get(index);
+            ErrorItem item =
+                    errorList.get(index);
 
-            title.setText(e.title);
-            cause.setText(e.cause);
-            solution.setText(e.solution);
-        }
+            title.setText(
+                    item.title
+            );
 
-        if (index >= 0) {
+            cause.setText(
+                    item.cause
+            );
 
-            for (String path :
-                    errorList.get(index).images) {
+            solution.setText(
+                    item.solution
+            );
 
-                addEditImage(box,path);
+            for (
+                    String path :
+                    item.images
+            ) {
+
+                addEditImage(
+                        box,
+                        path
+                );
             }
         }
 
         Button addImage =
-                btn("+ Bild hinzufügen");
+                btn(
+                        "+ Bild hinzufügen"
+                );
 
-        addImage.setOnClickListener(v -> {
+        addImage.setOnClickListener(
+                v -> {
 
-            String t =
-                    title.getText().toString().trim();
+                    String t =
+                            title.getText()
+                                    .toString()
+                                    .trim();
 
-            String c =
-                    cause.getText().toString().trim();
+                    String c =
+                            cause.getText()
+                                    .toString()
+                                    .trim();
 
-            String s =
-                    solution.getText().toString().trim();
+                    String s =
+                            solution.getText()
+                                    .toString()
+                                    .trim();
 
-            if (t.isEmpty() ||
-                c.isEmpty() ||
-                s.isEmpty()) {
+                    if (
+                            t.isEmpty()
+                                    || c.isEmpty()
+                                    || s.isEmpty()
+                    ) {
 
-                Toast.makeText(
-                        this,
-                        "Bitte alle drei Felder ausfüllen.",
-                        Toast.LENGTH_SHORT).show();
+                        Toast.makeText(
+                                this,
+                                "Bitte alle drei Felder ausfüllen.",
+                                Toast.LENGTH_SHORT
+                        ).show();
 
-                return;
-            }
+                        return;
+                    }
 
-            if (editingIndex < 0) {
+                    if (editingIndex < 0) {
 
-                errorList.add(
-                        new ErrorItem(t,c,s));
+                        errorList.add(
+                                new ErrorItem(
+                                        t,
+                                        c,
+                                        s
+                                )
+                        );
 
-                editingIndex =
-                        errorList.size()-1;
+                        editingIndex =
+                                errorList.size() - 1;
 
-            } else {
+                    } else {
 
-                ErrorItem e =
-                        errorList.get(editingIndex);
+                        ErrorItem item =
+                                errorList.get(
+                                        editingIndex
+                                );
 
-                e.title = t;
-                e.cause = c;
-                e.solution = s;
-            }
+                        item.title = t;
+                        item.cause = c;
+                        item.solution = s;
+                    }
 
-            saveErrors();
+                    saveErrors();
 
-            Intent intent =
-                    new Intent(
-                            Intent.ACTION_OPEN_DOCUMENT);
+                    Intent intent =
+                            new Intent(
+                                    Intent.ACTION_OPEN_DOCUMENT
+                            );
 
-            intent.addCategory(
-                    Intent.CATEGORY_OPENABLE);
+                    intent.addCategory(
+                            Intent.CATEGORY_OPENABLE
+                    );
 
-            intent.setType("image/*");
+                    intent.setType(
+                            "image/*"
+                    );
 
-            startActivityForResult(
-                    intent,IMAGE_REQUEST);
-        });
+                    startActivityForResult(
+                            intent,
+                            IMAGE_REQUEST
+                    );
+                }
+        );
 
         box.addView(addImage);
 
-        AlertDialog d =
+        AlertDialog dialog =
                 new AlertDialog.Builder(this)
                         .setTitle(
                                 index >= 0
                                         ? "Fehler bearbeiten"
-                                        : "Fehler hinzufügen")
+                                        : "Fehler hinzufügen"
+                        )
                         .setView(box)
                         .setNegativeButton(
-                                "Abbrechen",null)
+                                "Abbrechen",
+                                null
+                        )
                         .setPositiveButton(
-                                "Speichern",null)
+                                "Speichern",
+                                null
+                        )
                         .create();
 
-        d.setOnShowListener(x -> {
+        dialog.setOnShowListener(
+                d -> {
 
-            d.getButton(
-                    AlertDialog.BUTTON_POSITIVE)
-                    .setOnClickListener(v -> {
+                    dialog.getButton(
+                            AlertDialog.BUTTON_POSITIVE
+                    ).setOnClickListener(
+                            v -> {
 
-                        String t =
-                                title.getText()
-                                        .toString().trim();
+                                String t =
+                                        title.getText()
+                                                .toString()
+                                                .trim();
 
-                        String c =
-                                cause.getText()
-                                        .toString().trim();
+                                String c =
+                                        cause.getText()
+                                                .toString()
+                                                .trim();
 
-                        String s =
-                                solution.getText()
-                                        .toString().trim();
+                                String s =
+                                        solution.getText()
+                                                .toString()
+                                                .trim();
 
-                        if (t.isEmpty() ||
-                            c.isEmpty() ||
-                            s.isEmpty()) {
+                                if (
+                                        t.isEmpty()
+                                                || c.isEmpty()
+                                                || s.isEmpty()
+                                ) {
 
-                            Toast.makeText(
-                                    this,
-                                    "Alle drei Felder müssen ausgefüllt sein.",
-                                    Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(
+                                            this,
+                                            "Alle drei Felder müssen ausgefüllt sein.",
+                                            Toast.LENGTH_SHORT
+                                    ).show();
 
-                            return;
-                        }
+                                    return;
+                                }
 
-                        if (index < 0) {
+                                if (index < 0) {
 
-                            errorList.add(
-                                    new ErrorItem(
-                                            t,c,s));
+                                    errorList.add(
+                                            new ErrorItem(
+                                                    t,
+                                                    c,
+                                                    s
+                                            )
+                                    );
 
-                        } else {
+                                } else {
 
-                            ErrorItem e =
-                                    errorList.get(index);
+                                    ErrorItem item =
+                                            errorList.get(index);
 
-                            e.title = t;
-                            e.cause = c;
-                            e.solution = s;
-                        }
+                                    item.title = t;
+                                    item.cause = c;
+                                    item.solution = s;
+                                }
 
-                        removeDuplicates();
-                        saveErrors();
+                                removeDuplicates();
+                                saveErrors();
 
-                        d.dismiss();
-                        showTroubleshooting();
-                    });
-        });
+                                dialog.dismiss();
 
-        d.show();
+                                showTroubleshooting();
+                            }
+                    );
+                }
+        );
+
+        dialog.show();
     }
 
-    private EditText edit(String hint) {
+    private EditText edit(
+            String hint
+    ) {
 
-        EditText e = new EditText(this);
+        EditText e =
+                new EditText(this);
+
         e.setHint(hint);
         e.setHintTextColor(MUTED);
         e.setTextColor(TEXT);
@@ -874,33 +1754,56 @@ public class MainActivity extends Activity {
 
     private void addEditImage(
             LinearLayout parent,
-            String path) {
+            String path
+    ) {
 
-        ImageView image = new ImageView(this);
+        ImageView image =
+                new ImageView(this);
+
         image.setImageURI(
-                Uri.fromFile(new File(path)));
+                Uri.fromFile(
+                        new File(path)
+                )
+        );
+
         image.setScaleType(
-                ImageView.ScaleType.CENTER_INSIDE);
+                ImageView.ScaleType.CENTER_INSIDE
+        );
+
         image.setAdjustViewBounds(true);
 
-        parent.addView(image,
+        parent.addView(
+                image,
                 new LinearLayout.LayoutParams(
-                        -1,dp(150)));
+                        -1,
+                        dp(150)
+                )
+        );
 
         Button remove =
                 btn("Bild entfernen");
 
-        remove.setOnClickListener(v -> {
+        remove.setOnClickListener(
+                v -> {
 
-            if (editingIndex >= 0) {
+                    if (
+                            editingIndex >= 0
+                                    && editingIndex
+                                    < errorList.size()
+                    ) {
 
-                errorList.get(editingIndex)
-                        .images.remove(path);
+                        errorList.get(
+                                editingIndex
+                        ).images.remove(path);
 
-                saveErrors();
-                showEditError(editingIndex);
-            }
-        });
+                        saveErrors();
+
+                        showEditError(
+                                editingIndex
+                        );
+                    }
+                }
+        );
 
         parent.addView(remove);
     }
@@ -909,52 +1812,67 @@ public class MainActivity extends Activity {
     protected void onActivityResult(
             int requestCode,
             int resultCode,
-            Intent data) {
+            Intent data
+    ) {
 
         super.onActivityResult(
-                requestCode,resultCode,data);
+                requestCode,
+                resultCode,
+                data
+        );
 
         if (
-                requestCode == IMAGE_REQUEST &&
-                resultCode == RESULT_OK &&
-                data != null &&
-                data.getData() != null &&
-                editingIndex >= 0
+                requestCode == IMAGE_REQUEST
+                        && resultCode == RESULT_OK
+                        && data != null
+                        && data.getData() != null
+                        && editingIndex >= 0
+                        && editingIndex < errorList.size()
         ) {
 
             String path =
-                    copyImage(data.getData());
+                    copyImage(
+                            data.getData()
+                    );
 
             if (path != null) {
 
-                errorList.get(editingIndex)
-                        .images.add(path);
+                errorList.get(
+                        editingIndex
+                ).images.add(path);
 
                 saveErrors();
             }
 
-            showEditError(editingIndex);
+            showEditError(
+                    editingIndex
+            );
         }
     }
 
-    private String copyImage(Uri uri) {
+    private String copyImage(
+            Uri uri
+    ) {
 
         try {
 
             File dir =
                     new File(
                             getFilesDir(),
-                            "error_images");
+                            "error_images"
+                    );
 
-            if (!dir.exists())
+            if (!dir.exists()) {
                 dir.mkdirs();
+            }
 
             File file =
                     new File(
                             dir,
-                            "img_"+
-                            System.currentTimeMillis()+
-                            ".jpg");
+                            "img_"
+                                    + System.currentTimeMillis()
+                                    + ".jpg"
+                    );
 
             InputStream in =
                     getContentResolver()
@@ -963,11 +1881,23 @@ public class MainActivity extends Activity {
             FileOutputStream out =
                     new FileOutputStream(file);
 
-            byte[] buffer = new byte[8192];
-            int n;
+            byte[] buffer =
+                    new byte[8192];
 
-            while ((n=in.read(buffer))!=-1)
-                out.write(buffer,0,n);
+            int length;
+
+            while (
+                    (length =
+                            in.read(buffer))
+                            != -1
+            ) {
+
+                out.write(
+                        buffer,
+                        0,
+                        length
+                );
+            }
 
             in.close();
             out.close();
@@ -979,7 +1909,8 @@ public class MainActivity extends Activity {
             Toast.makeText(
                     this,
                     "Bild konnte nicht übernommen werden.",
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_SHORT
+            ).show();
 
             return null;
         }
@@ -991,75 +1922,99 @@ public class MainActivity extends Activity {
 
         if (profi) {
 
-            items = new String[]{
-                    "Startseite",
-                    "Fehlersuche",
-                    "Profi-Modus ausschalten"};
+            items =
+                    new String[]{
+                            "Startseite",
+                            "Fehlersuche",
+                            "Profi-Modus ausschalten"
+                    };
 
         } else {
 
-            items = new String[]{
-                    "Startseite",
-                    "Fehlersuche",
-                    "Profi-Modus"};
+            items =
+                    new String[]{
+                            "Startseite",
+                            "Fehlersuche",
+                            "Profi-Modus"
+                    };
         }
 
         new AlertDialog.Builder(this)
                 .setTitle("Z.AERO")
-                .setItems(items,(d,w) -> {
+                .setItems(
+                        items,
+                        (dialog, which) -> {
 
-                    if (w == 0) {
+                            if (which == 0) {
 
-                        showHome();
+                                showHome();
 
-                    } else if (w == 1) {
+                            } else if (which == 1) {
 
-                        showTroubleshooting();
+                                showTroubleshooting();
 
-                    } else {
+                            } else {
 
-                        if (profi) {
+                                if (profi) {
 
-                            profi = false;
-                            saveProfi();
-                            buildBase();
-                            showHome();
+                                    profi = false;
 
-                        } else {
+                                    saveProfi();
 
-                            askPassword();
+                                    buildBase();
+
+                                    showHome();
+
+                                } else {
+
+                                    askPassword();
+                                }
+                            }
                         }
-                    }
-                })
+                )
                 .show();
     }
 
     private void askPassword() {
 
-        EditText input = new EditText(this);
+        EditText input =
+                new EditText(this);
 
         input.setHint("Passwort");
         input.setTextColor(TEXT);
+
         input.setInputType(
-                InputType.TYPE_CLASS_TEXT |
-                InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                InputType.TYPE_CLASS_TEXT
+                        | InputType.TYPE_TEXT_VARIATION_PASSWORD
+        );
 
         new AlertDialog.Builder(this)
                 .setTitle("Profi-Modus")
-                .setMessage("Passwort eingeben")
+                .setMessage(
+                        "Passwort eingeben"
+                )
                 .setView(input)
                 .setNegativeButton(
-                        "Abbrechen",null)
+                        "Abbrechen",
+                        null
+                )
                 .setPositiveButton(
-                        "OK",(d,w) -> {
+                        "OK",
+                        (dialog, which) -> {
 
-                            if (MASTER.equals(
-                                    input.getText()
-                                            .toString())) {
+                            if (
+                                    MASTER.equals(
+                                            input.getText()
+                                                    .toString()
+                                    )
+                            ) {
 
                                 profi = true;
+
                                 saveProfi();
+
                                 buildBase();
+
                                 showHome();
 
                             } else {
@@ -1067,19 +2022,25 @@ public class MainActivity extends Activity {
                                 Toast.makeText(
                                         this,
                                         "Falsches Passwort.",
-                                        Toast.LENGTH_SHORT)
-                                        .show();
+                                        Toast.LENGTH_SHORT
+                                ).show();
                             }
-                        })
+                        }
+                )
                 .show();
     }
 
     private void saveProfi() {
 
         getSharedPreferences(
-                PREFS,MODE_PRIVATE)
+                PREFS,
+                MODE_PRIVATE
+        )
                 .edit()
-                .putBoolean(PROFI,profi)
+                .putBoolean(
+                        PROFI,
+                        profi
+                )
                 .apply();
     }
 
@@ -1087,34 +2048,64 @@ public class MainActivity extends Activity {
 
         try {
 
-            JSONArray a = new JSONArray();
+            JSONArray array =
+                    new JSONArray();
 
-            for (ErrorItem e : errorList) {
+            for (
+                    ErrorItem item :
+                    errorList
+            ) {
 
-                JSONObject o = new JSONObject();
+                JSONObject object =
+                        new JSONObject();
 
-                o.put("title",e.title);
-                o.put("cause",e.cause);
-                o.put("solution",e.solution);
+                object.put(
+                        "title",
+                        item.title
+                );
 
-                JSONArray imgs = new JSONArray();
+                object.put(
+                        "cause",
+                        item.cause
+                );
 
-                for (String path : e.images)
-                    imgs.put(path);
+                object.put(
+                        "solution",
+                        item.solution
+                );
 
-                o.put("imagePaths",imgs);
+                JSONArray images =
+                        new JSONArray();
 
-                a.put(o);
+                for (
+                        String path :
+                        item.images
+                ) {
+
+                    images.put(path);
+                }
+
+                object.put(
+                        "imagePaths",
+                        images
+                );
+
+                array.put(object);
             }
 
             getSharedPreferences(
-                    PREFS,MODE_PRIVATE)
+                    PREFS,
+                    MODE_PRIVATE
+            )
                     .edit()
                     .putString(
-                            ERRORS,a.toString())
+                            ERRORS,
+                            array.toString()
+                    )
                     .apply();
 
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void loadErrors() {
@@ -1123,105 +2114,193 @@ public class MainActivity extends Activity {
 
         String saved =
                 getSharedPreferences(
-                        PREFS,MODE_PRIVATE)
-                        .getString(ERRORS,"");
+                        PREFS,
+                        MODE_PRIVATE
+                )
+                        .getString(
+                                ERRORS,
+                                ""
+                        );
 
-        if (saved.isEmpty())
+        if (saved.isEmpty()) {
             return;
+        }
 
         try {
 
-            JSONArray a =
+            JSONArray array =
                     new JSONArray(saved);
 
-            for (int i=0;i<a.length();i++) {
+            for (
+                    int i = 0;
+                    i < array.length();
+                    i++
+            ) {
 
-                JSONObject o =
-                        a.getJSONObject(i);
+                JSONObject object =
+                        array.getJSONObject(i);
 
-                ErrorItem e =
+                ErrorItem item =
                         new ErrorItem(
-                                o.optString("title",""),
-                                o.optString(
+                                object.optString(
+                                        "title",
+                                        ""
+                                ),
+                                object.optString(
                                         "cause",
-                                        "Nicht angegeben"),
-                                o.optString(
-                                        "solution",""));
+                                        "Nicht angegeben"
+                                ),
+                                object.optString(
+                                        "solution",
+                                        ""
+                                )
+                        );
 
-                JSONArray imgs =
-                        o.optJSONArray("imagePaths");
+                JSONArray images =
+                        object.optJSONArray(
+                                "imagePaths"
+                        );
 
-                if (imgs == null)
-                    imgs = o.optJSONArray("images");
+                if (images == null) {
 
-                if (imgs != null) {
+                    images =
+                            object.optJSONArray(
+                                    "images"
+                            );
+                }
 
-                    for (int j=0;j<imgs.length();j++) {
+                if (images != null) {
+
+                    for (
+                            int j = 0;
+                            j < images.length();
+                            j++
+                    ) {
 
                         String path =
-                                imgs.optString(j,"");
+                                images.optString(
+                                        j,
+                                        ""
+                                );
 
-                        if (!path.isEmpty())
-                            e.images.add(path);
+                        if (!path.isEmpty()) {
+
+                            item.images.add(
+                                    path
+                            );
+                        }
                     }
                 }
 
-                String old =
-                        o.optString("imagePath","");
+                String oldImage =
+                        object.optString(
+                                "imagePath",
+                                ""
+                        );
 
-                if (!old.isEmpty() &&
-                    !e.images.contains(old)) {
+                if (
+                        !oldImage.isEmpty()
+                                && !item.images.contains(
+                                oldImage
+                        )
+                ) {
 
-                    e.images.add(old);
+                    item.images.add(
+                            oldImage
+                    );
                 }
 
-                errorList.add(e);
+                errorList.add(item);
             }
 
             removeDuplicates();
 
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void removeDuplicates() {
 
-        for (int i=errorList.size()-1;i>=0;i--) {
+        for (
+                int i = errorList.size() - 1;
+                i >= 0;
+                i--
+        ) {
 
             ErrorItem current =
                     errorList.get(i);
 
-            for (int j=0;j<i;j++) {
+            for (
+                    int j = 0;
+                    j < i;
+                    j++
+            ) {
 
                 ErrorItem old =
                         errorList.get(j);
 
                 if (
-                        old.title.equals(current.title) &&
-                        old.cause.equals(current.cause) &&
-                        old.solution.equals(current.solution)
+                        old.title.equals(
+                                current.title
+                        )
+                                && old.cause.equals(
+                                current.cause
+                        )
+                                && old.solution.equals(
+                                current.solution
+                        )
                 ) {
 
-                    for (String image :
-                            current.images) {
+                    for (
+                            String image :
+                            current.images
+                    ) {
 
-                        if (!old.images.contains(image))
-                            old.images.add(image);
+                        if (
+                                !old.images.contains(
+                                        image
+                                )
+                        ) {
+
+                            old.images.add(
+                                    image
+                            );
+                        }
                     }
 
                     errorList.remove(i);
+
                     break;
                 }
             }
         }
     }
 
-    private void addSpace(int size) {
+    private void addSpace(
+            int size
+    ) {
 
-        View v = new View(this);
+        addSpaceTo(
+                content,
+                size
+        );
+    }
 
-        content.addView(v,
+    private void addSpaceTo(
+            LinearLayout layout,
+            int size
+    ) {
+
+        View space =
+                new View(this);
+
+        layout.addView(
+                space,
                 new LinearLayout.LayoutParams(
-                        1,dp(size)));
+                        1,
+                        dp(size)
+                )
+        );
     }
 
     private static class ErrorItem {
@@ -1236,7 +2315,8 @@ public class MainActivity extends Activity {
         ErrorItem(
                 String title,
                 String cause,
-                String solution) {
+                String solution
+        ) {
 
             this.title = title;
             this.cause = cause;

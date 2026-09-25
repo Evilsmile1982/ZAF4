@@ -19,15 +19,16 @@ jobs:
       - name: JDK 17 einrichten
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
+          java-version: "17"
+          distribution: "temurin"
+          cache: "gradle"
 
-      - name: Mit Gradle bauen
+      - name: Android App bauen
         run: gradle build
 
       - name: APK hochladen
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: Z-Aero-Diamond-Clean
-          path: App/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/*.apk

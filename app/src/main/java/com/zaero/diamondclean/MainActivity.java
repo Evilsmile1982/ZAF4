@@ -771,23 +771,7 @@ public class MainActivity extends Activity {
 
         if (!item.images.isEmpty()) {
             addSpaceTo(card, 8);
-
-            for (String path : item.images) {
-                File file = new File(path);
-
-                if (!file.exists()) {
-                    continue;
-                }
-
-                ImageView image = new ImageView(this);
-                image.setImageURI(Uri.fromFile(file));
-                image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                image.setAdjustViewBounds(true);
-                image.setOnClickListener(v -> showZoomImage(file));
-
-                card.addView(image,
-                        new LinearLayout.LayoutParams(-1, dp(150)));
-            }
+            addErrorImagePager(card, item.images);
         }
 
         if (profi) {
@@ -801,6 +785,137 @@ public class MainActivity extends Activity {
         params.bottomMargin = dp(10);
 
         searchResults.addView(card, params);
+    }
+
+    private void addErrorImagePager(
+            LinearLayout parent,
+            ArrayList<String> imagePaths) {
+
+        ArrayList<String> validPaths = new ArrayList<>();
+
+        // Die Reihenfolge der gespeicherten Liste wird exakt beibehalten.
+        for (String path : imagePaths) {
+            if (path == null || path.isEmpty()) {
+                continue;
+            }
+
+            File file = new File(path);
+
+            if (file.exists()) {
+                validPaths.add(path);
+            }
+        }
+
+        if (validPaths.isEmpty()) {
+            return;
+        }
+
+        LinearLayout pager = new LinearLayout(this);
+        pager.setOrientation(LinearLayout.VERTICAL);
+        pager.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        ImageView image = new ImageView(this);
+        image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        image.setAdjustViewBounds(true);
+
+        TextView counter =
+                tv("1 / " + validPaths.size(), 14, MUTED, true);
+        counter.setGravity(Gravity.CENTER);
+
+        pager.addView(image,
+                new LinearLayout.LayoutParams(-1, dp(220)));
+
+        LinearLayout navigation = new LinearLayout(this);
+        navigation.setOrientation(LinearLayout.HORIZONTAL);
+        navigation.setGravity(Gravity.CENTER);
+
+        Button previous = btn("‹");
+        Button next = btn("›");
+
+        LinearLayout.LayoutParams navButtonParams =
+                new LinearLayout.LayoutParams(dp(70), dp(44));
+        navButtonParams.setMargins(dp(6), 0, dp(6), 0);
+
+        navigation.addView(previous, navButtonParams);
+        navigation.addView(counter,
+                new LinearLayout.LayoutParams(dp(90), dp(44)));
+        navigation.addView(next, navButtonParams);
+
+        pager.addView(navigation);
+
+        final int[] currentIndex = {0};
+
+        Runnable showCurrent = () -> {
+            int index = currentIndex[0];
+
+            if (index < 0) {
+                index = validPaths.size() - 1;
+                currentIndex[0] = index;
+            }
+
+            if (index >= validPaths.size()) {
+                index = 0;
+                currentIndex[0] = index;
+            }
+
+            File currentFile =
+                    new File(validPaths.get(index));
+
+            image.setImageURI(Uri.fromFile(currentFile));
+            counter.setText(
+                    (index + 1) + " / " + validPaths.size());
+
+            previous.setEnabled(validPaths.size() > 1);
+            next.setEnabled(validPaths.size() > 1);
+        };
+
+        previous.setOnClickListener(v -> {
+            currentIndex[0]--;
+            showCurrent.run();
+        });
+
+        next.setOnClickListener(v -> {
+            currentIndex[0]++;
+            showCurrent.run();
+        });
+
+        final float[] downX = {0f};
+
+        image.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                downX[0] = event.getX();
+                return true;
+            }
+
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                float deltaX = event.getX() - downX[0];
+
+                if (Math.abs(deltaX) >= dp(50)
+                        && validPaths.size() > 1) {
+
+                    if (deltaX < 0) {
+                        currentIndex[0]++;
+                    } else {
+                        currentIndex[0]--;
+                    }
+
+                    showCurrent.run();
+                    return true;
+                }
+
+                File currentFile =
+                        new File(validPaths.get(currentIndex[0]));
+                showZoomImage(currentFile);
+                return true;
+            }
+
+            return true;
+        });
+
+        showCurrent.run();
+
+        parent.addView(pager,
+                new LinearLayout.LayoutParams(-1, -2));
     }
 
     private void showEditError(int index) {

@@ -22,6 +22,7 @@ import android.view.animation.AnimationSet;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -212,24 +213,67 @@ public class MainActivity extends Activity {
         home.addView(welcome,
                 new LinearLayout.LayoutParams(-1, -2));
 
+        FrameLayout brandWrap = new FrameLayout(this);
+        brandWrap.setGravity(Gravity.CENTER);
+
         TextView brand = tv("Z-Aero Diamond Clean", 30, TEXT, true);
         brand.setGravity(Gravity.CENTER);
-
-        home.addView(brand,
-                new LinearLayout.LayoutParams(-1, -2));
+        brandWrap.addView(brand,
+                new FrameLayout.LayoutParams(-1, -2));
 
         // Langsame Einfahr-Animation: 1,8 Sekunden.
-        TranslateAnimation slide = new TranslateAnimation(
+        TranslateAnimation brandSlide = new TranslateAnimation(
                 -dp(280), 0, 0, 0);
-        slide.setDuration(1800);
+        brandSlide.setDuration(1800);
 
-        AlphaAnimation fade = new AlphaAnimation(0f, 1f);
-        fade.setDuration(1800);
+        AlphaAnimation brandFade = new AlphaAnimation(0f, 1f);
+        brandFade.setDuration(1800);
 
-        AnimationSet set = new AnimationSet(true);
-        set.addAnimation(slide);
-        set.addAnimation(fade);
-        brand.startAnimation(set);
+        AnimationSet brandSet = new AnimationSet(true);
+        brandSet.addAnimation(brandSlide);
+        brandSet.addAnimation(brandFade);
+        brand.startAnimation(brandSet);
+
+        // Kurzer Diamant-Funkler wie eine kleine Sternschnuppe.
+        TextView sparkle = tv("✦", 20, GOLD, true);
+        sparkle.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams sparkleParams =
+                new FrameLayout.LayoutParams(dp(34), dp(34));
+        sparkleParams.gravity = Gravity.CENTER;
+        brandWrap.addView(sparkle, sparkleParams);
+
+        TranslateAnimation sparkleMove = new TranslateAnimation(
+                -dp(150), dp(150), 0, 0);
+        sparkleMove.setDuration(850);
+        sparkleMove.setStartOffset(550);
+
+        AlphaAnimation sparkleIn = new AlphaAnimation(0f, 1f);
+        sparkleIn.setDuration(220);
+        sparkleIn.setStartOffset(550);
+
+        AnimationSet sparkleInSet = new AnimationSet(true);
+        sparkleInSet.addAnimation(sparkleMove);
+        sparkleInSet.addAnimation(sparkleIn);
+        sparkleInSet.setAnimationListener(new AnimationSet.AnimationListener() {
+            @Override
+            public void onAnimationStart(android.view.animation.Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(android.view.animation.Animation animation) {
+                AlphaAnimation sparkleOut = new AlphaAnimation(1f, 0f);
+                sparkleOut.setDuration(220);
+                sparkle.startAnimation(sparkleOut);
+            }
+
+            @Override
+            public void onAnimationRepeat(android.view.animation.Animation animation) {
+            }
+        });
+        sparkle.startAnimation(sparkleInSet);
+
+        home.addView(brandWrap,
+                new LinearLayout.LayoutParams(-1, dp(48)));
 
         TextView subtitle = tv(
                 "Ihre Unterstützung für den sicheren und effizienten Betrieb der Anlage.",
@@ -269,6 +313,19 @@ public class MainActivity extends Activity {
 
         home.addView(cards,
                 new LinearLayout.LayoutParams(-1, -2));
+
+        // Die drei Startkarten fahren gleichzeitig von rechts nach links ein.
+        TranslateAnimation cardsSlide = new TranslateAnimation(
+                dp(420), 0, 0, 0);
+        cardsSlide.setDuration(1800);
+
+        AlphaAnimation cardsFade = new AlphaAnimation(0f, 1f);
+        cardsFade.setDuration(1800);
+
+        AnimationSet cardsSet = new AnimationSet(true);
+        cardsSet.addAnimation(cardsSlide);
+        cardsSet.addAnimation(cardsFade);
+        cards.startAnimation(cardsSet);
 
         content.addView(home,
                 new LinearLayout.LayoutParams(-1, -2));
@@ -709,9 +766,24 @@ public class MainActivity extends Activity {
     private void addErrorResult(int index, ErrorItem item) {
         LinearLayout card = panel();
 
-        TextView title = tv(item.title, 20, TEXT, true);
-        card.addView(title,
-                new LinearLayout.LayoutParams(-1, dp(38)));
+        // FEHLER: fett und Gold, der Fehlerbereich ist rot umrandet.
+        LinearLayout errorBox = new LinearLayout(this);
+        errorBox.setOrientation(LinearLayout.VERTICAL);
+        errorBox.setPadding(dp(12), dp(10), dp(12), dp(10));
+        errorBox.setBackground(bg(PANEL2, 10, RED));
+
+        TextView errorLabel = tv("FEHLER", 14, GOLD, true);
+        errorBox.addView(errorLabel,
+                new LinearLayout.LayoutParams(-1, dp(26)));
+
+        TextView title = tv(item.title, 20, GOLD, true);
+        errorBox.addView(title,
+                new LinearLayout.LayoutParams(-1, -2));
+
+        card.addView(errorBox,
+                new LinearLayout.LayoutParams(-1, -2));
+
+        addSpaceTo(card, 10);
 
         TextView causeLabel =
                 tv("Ursache", 13, RED, true);
@@ -723,13 +795,21 @@ public class MainActivity extends Activity {
         card.addView(cause,
                 new LinearLayout.LayoutParams(-1, -2));
 
-        TextView solutionLabel =
-                tv("Lösung", 13, GREEN, true);
-        card.addView(solutionLabel,
-                new LinearLayout.LayoutParams(-1, dp(28)));
+        // LÖSUNG: fett und grün, der Lösungsbereich ist grün umrandet.
+        LinearLayout solutionBox = new LinearLayout(this);
+        solutionBox.setOrientation(LinearLayout.VERTICAL);
+        solutionBox.setPadding(dp(12), dp(10), dp(12), dp(10));
+        solutionBox.setBackground(bg(PANEL2, 10, GREEN));
 
-        TextView solution = tv(item.solution, 15, TEXT, false);
-        card.addView(solution,
+        TextView solutionLabel = tv("LÖSUNG", 14, GREEN, true);
+        solutionBox.addView(solutionLabel,
+                new LinearLayout.LayoutParams(-1, dp(26)));
+
+        TextView solution = tv(item.solution, 15, GREEN, true);
+        solutionBox.addView(solution,
+                new LinearLayout.LayoutParams(-1, -2));
+
+        card.addView(solutionBox,
                 new LinearLayout.LayoutParams(-1, -2));
 
         if (!item.images.isEmpty()) {

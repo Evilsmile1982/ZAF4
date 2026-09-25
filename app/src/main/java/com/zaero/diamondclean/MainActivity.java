@@ -54,8 +54,8 @@ public class MainActivity extends Activity {
     private static final String PREFS = "zaero_data";
     private static final String ERRORS = "errors";
     private static final String PROFI = "profi";
-    Privat statisch Finale Zeichenkette ANFAHREN_TEXT="anfahren_text";
-Privat statisch Finale Zeichenkette ABSTELLEN_TEXT="abstellen_text";
+    private static final String ANFAHREN_TEXT="anfahren_text";
+    private static final String ABSTELLEN_TEXT="abstellen_text";
     private static final String MASTER = "C1B2A3Z";
 
     private static final int IMAGE_REQUEST = 5001;

@@ -862,6 +862,14 @@ public class MainActivity extends Activity {
                     new File(validPaths.get(index));
 
             image.setImageURI(Uri.fromFile(currentFile));
+
+            // Beim Wechsel auf ein neues Bild immer auf die normale Ansicht
+            // zurücksetzen. Zoomen erfolgt ausschließlich mit zwei Fingern.
+            image.setScaleX(1f);
+            image.setScaleY(1f);
+            image.setPivotX(image.getWidth() / 2f);
+            image.setPivotY(image.getHeight() / 2f);
+
             counter.setText(
                     (index + 1) + " / " + validPaths.size());
 
@@ -880,33 +888,79 @@ public class MainActivity extends Activity {
         });
 
         final float[] downX = {0f};
+        final boolean[] didPinch = {false};
+
+        ScaleGestureDetector pinchDetector =
+                new ScaleGestureDetector(
+                        this,
+                        new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                            @Override
+                            public boolean onScale(
+                                    ScaleGestureDetector detector) {
+
+                                float factor =
+                                        detector.getScaleFactor();
+
+                                float currentScale =
+                                        image.getScaleX();
+
+                                float newScale =
+                                        currentScale * factor;
+
+                                // Maximal 4-fache Vergrößerung.
+                                newScale =
+                                        Math.max(1f,
+                                                Math.min(4f, newScale));
+
+                                image.setScaleX(newScale);
+                                image.setScaleY(newScale);
+
+                                didPinch[0] = true;
+                                return true;
+                            }
+                        });
 
         image.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                downX[0] = event.getX();
-                return true;
-            }
+            pinchDetector.onTouchEvent(event);
 
-            if (event.getAction() == MotionEvent.ACTION_UP) {
-                float deltaX = event.getX() - downX[0];
+            switch (event.getActionMasked()) {
 
-                if (Math.abs(deltaX) >= dp(50)
-                        && validPaths.size() > 1) {
+                case MotionEvent.ACTION_DOWN:
+                    downX[0] = event.getX();
+                    didPinch[0] = false;
+                    return true;
 
-                    if (deltaX < 0) {
-                        currentIndex[0]++;
-                    } else {
-                        currentIndex[0]--;
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    // Ab jetzt ist es eine Zwei-Finger-Geste.
+                    didPinch[0] = true;
+                    return true;
+
+                case MotionEvent.ACTION_UP:
+                    // Nach einem Pinch niemals versehentlich ein Bild
+                    // wechseln.
+                    if (didPinch[0]) {
+                        return true;
                     }
 
-                    showCurrent.run();
-                    return true;
-                }
+                    float deltaX =
+                            event.getX() - downX[0];
 
-                File currentFile =
-                        new File(validPaths.get(currentIndex[0]));
-                showZoomImage(currentFile);
-                return true;
+                    if (Math.abs(deltaX) >= dp(50)
+                            && validPaths.size() > 1) {
+
+                        if (deltaX < 0) {
+                            currentIndex[0]++;
+                        } else {
+                            currentIndex[0]--;
+                        }
+
+                        showCurrent.run();
+                    }
+
+                    return true;
+
+                case MotionEvent.ACTION_CANCEL:
+                    return true;
             }
 
             return true;

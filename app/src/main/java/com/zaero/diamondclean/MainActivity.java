@@ -2,10 +2,12 @@ package com.zaero.diamondclean;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -23,6 +25,9 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +35,6 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final int GOLD = Color.rgb(214, 168, 79);
-    private static final int GOLD_DARK = Color.rgb(145, 108, 35);
     private static final int BG = Color.rgb(12, 12, 14);
     private static final int PANEL = Color.rgb(28, 27, 30);
     private static final int PANEL_LIGHT = Color.rgb(40, 38, 42);
@@ -39,47 +43,71 @@ public class MainActivity extends Activity {
 
     private static final String PREFS = "zaero_data";
     private static final String KEY_ERRORS = "errors";
+    private static final String KEY_PROFI = "profi";
 
     private static final String MASTER = "Chefe";
+
+    private static final int REQUEST_ERROR_IMAGE = 5001;
 
     private LinearLayout root;
     private LinearLayout content;
 
     private boolean profi = false;
 
-    private final List<ErrorItem> errors = new ArrayList<ErrorItem>();
+    private String editingImagePath = "";
+    private ImageView editingImagePreview;
+
+    private final List<ErrorItem> errors =
+            new ArrayList<ErrorItem>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        SharedPreferences prefs =
+                getSharedPreferences(
+                        PREFS,
+                        MODE_PRIVATE
+                );
+
+        profi = prefs.getBoolean(
+                KEY_PROFI,
+                false
+        );
 
         loadErrors();
         buildBase();
         showHome();
     }
 
-    // ============================================================
-    // GRUNDLAYOUT
-    // ============================================================
-
     private void buildBase() {
 
         root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
+        root.setOrientation(
+                LinearLayout.VERTICAL
+        );
         root.setBackgroundColor(BG);
 
         setContentView(root);
 
         createHeader();
 
-        ScrollView scroll = new ScrollView(this);
+        ScrollView scroll =
+                new ScrollView(this);
+
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(BG);
 
-        content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
+        content =
+                new LinearLayout(this);
+
+        content.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
         content.setGravity(
-                Gravity.TOP | Gravity.CENTER_HORIZONTAL
+                Gravity.TOP |
+                        Gravity.CENTER_HORIZONTAL
         );
 
         content.setPadding(
@@ -109,20 +137,30 @@ public class MainActivity extends Activity {
 
     private void createHeader() {
 
-        LinearLayout header = new LinearLayout(this);
-        header.setOrientation(LinearLayout.HORIZONTAL);
-        header.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout header =
+                new LinearLayout(this);
+
+        header.setOrientation(
+                LinearLayout.HORIZONTAL
+        );
+
+        header.setGravity(
+                Gravity.CENTER_VERTICAL
+        );
+
         header.setPadding(
                 dp(12),
                 dp(8),
                 dp(12),
                 dp(8)
         );
+
         header.setBackgroundColor(
                 Color.rgb(18, 17, 19)
         );
 
-        Button menu = smallButton("☰");
+        Button menu =
+                smallButton("☰");
 
         menu.setOnClickListener(
                 new View.OnClickListener() {
@@ -141,15 +179,17 @@ public class MainActivity extends Activity {
                 )
         );
 
-        TextView title = new TextView(this);
-        title.setText("Z.AERO");
-        title.setTextColor(GOLD);
-        title.setTextSize(21);
-        title.setTypeface(
-                Typeface.DEFAULT,
-                Typeface.BOLD
+        TextView title =
+                text(
+                        "Z.AERO",
+                        21,
+                        GOLD,
+                        true
+                );
+
+        title.setGravity(
+                Gravity.CENTER
         );
-        title.setGravity(Gravity.CENTER);
 
         header.addView(
                 title,
@@ -160,15 +200,19 @@ public class MainActivity extends Activity {
                 )
         );
 
-        TextView user = new TextView(this);
-        user.setText(
-                profi
-                        ? "PROFI"
-                        : "BENUTZER"
+        TextView user =
+                text(
+                        profi
+                                ? "PROFI"
+                                : "BENUTZER",
+                        12,
+                        TEXT,
+                        false
+                );
+
+        user.setGravity(
+                Gravity.CENTER
         );
-        user.setTextColor(TEXT);
-        user.setTextSize(12);
-        user.setGravity(Gravity.CENTER);
 
         header.addView(
                 user,
@@ -187,24 +231,21 @@ public class MainActivity extends Activity {
         );
     }
 
-    // ============================================================
-    // NEUE STARTSEITE
-    // ============================================================
-
     private void showHome() {
 
         clearContent();
 
-        /*
-         * Die komplette Startseite wird kompakt
-         * horizontal und vertikal zentriert.
-         */
-        content.setGravity(Gravity.CENTER);
+        content.setGravity(
+                Gravity.CENTER
+        );
 
-        LinearLayout home = new LinearLayout(this);
+        LinearLayout home =
+                new LinearLayout(this);
+
         home.setOrientation(
                 LinearLayout.VERTICAL
         );
+
         home.setGravity(
                 Gravity.CENTER_HORIZONTAL
         );
@@ -216,18 +257,17 @@ public class MainActivity extends Activity {
                 dp(8)
         );
 
-        // --------------------------------------------------------
-        // WILLKOMMEN
-        // --------------------------------------------------------
+        TextView welcome =
+                text(
+                        "Willkommen bei",
+                        22,
+                        GOLD,
+                        true
+                );
 
-        TextView welcome = text(
-                "Willkommen bei",
-                22,
-                GOLD,
-                true
+        welcome.setGravity(
+                Gravity.CENTER
         );
-
-        welcome.setGravity(Gravity.CENTER);
 
         home.addView(
                 welcome,
@@ -237,18 +277,17 @@ public class MainActivity extends Activity {
                 )
         );
 
-        // --------------------------------------------------------
-        // Z-AERO DIAMOND CLEAN
-        // --------------------------------------------------------
+        TextView brand =
+                text(
+                        "Z-Aero Diamond Clean",
+                        30,
+                        TEXT,
+                        true
+                );
 
-        TextView brand = text(
-                "Z-Aero Diamond Clean",
-                30,
-                TEXT,
-                true
+        brand.setGravity(
+                Gravity.CENTER
         );
-
-        brand.setGravity(Gravity.CENTER);
 
         brand.setPadding(
                 0,
@@ -265,18 +304,17 @@ public class MainActivity extends Activity {
                 )
         );
 
-        // --------------------------------------------------------
-        // UNTERTITEL
-        // --------------------------------------------------------
+        TextView subtitle =
+                text(
+                        "Ihre Unterstützung für den sicheren und effizienten Betrieb der Anlage.",
+                        15,
+                        MUTED,
+                        false
+                );
 
-        TextView subtitle = text(
-                "Ihre Unterstützung für den sicheren und effizienten Betrieb der Anlage.",
-                15,
-                MUTED,
-                false
+        subtitle.setGravity(
+                Gravity.CENTER
         );
-
-        subtitle.setGravity(Gravity.CENTER);
 
         subtitle.setPadding(
                 dp(8),
@@ -293,11 +331,8 @@ public class MainActivity extends Activity {
                 )
         );
 
-        // --------------------------------------------------------
-        // ECHTES MASCHINENBILD
-        // --------------------------------------------------------
-
-        ImageView machine = new ImageView(this);
+        ImageView machine =
+                new ImageView(this);
 
         machine.setImageResource(
                 R.drawable.machine
@@ -307,7 +342,9 @@ public class MainActivity extends Activity {
                 ImageView.ScaleType.CENTER_INSIDE
         );
 
-        machine.setAdjustViewBounds(true);
+        machine.setAdjustViewBounds(
+                true
+        );
 
         machine.setContentDescription(
                 "Z-Aero Diamond Clean Anlage"
@@ -319,19 +356,19 @@ public class MainActivity extends Activity {
                         dp(205)
                 );
 
-        imageParams.topMargin = dp(2);
-        imageParams.bottomMargin = dp(12);
+        imageParams.topMargin =
+                dp(2);
+
+        imageParams.bottomMargin =
+                dp(12);
 
         home.addView(
                 machine,
                 imageParams
         );
 
-        // --------------------------------------------------------
-        // DREI KARTEN NEBENEINANDER
-        // --------------------------------------------------------
-
-        LinearLayout cards = new LinearLayout(this);
+        LinearLayout cards =
+                new LinearLayout(this);
 
         cards.setOrientation(
                 LinearLayout.HORIZONTAL
@@ -341,7 +378,6 @@ public class MainActivity extends Activity {
                 Gravity.CENTER
         );
 
-        // ANFAHREN
         addHomeCard(
                 cards,
                 "▶",
@@ -355,7 +391,6 @@ public class MainActivity extends Activity {
                 }
         );
 
-        // ABSTELLEN
         addHomeCard(
                 cards,
                 "■",
@@ -369,7 +404,6 @@ public class MainActivity extends Activity {
                 }
         );
 
-        // FEHLERSUCHE
         addHomeCard(
                 cards,
                 "⌕",
@@ -399,42 +433,32 @@ public class MainActivity extends Activity {
                 )
         );
 
-        // --------------------------------------------------------
-        // ANIMATION:
-        // Z-Aero Diamond Clean fährt langsam von links herein
-        // --------------------------------------------------------
-
-        AnimationSet brandAnimation =
+        AnimationSet animation =
                 new AnimationSet(true);
 
-        TranslateAnimation slide =
+        animation.addAnimation(
                 new TranslateAnimation(
                         -dp(420),
                         0,
                         0,
                         0
-                );
+                )
+        );
 
-        AlphaAnimation fade =
+        animation.addAnimation(
                 new AlphaAnimation(
                         0.0f,
                         1.0f
-                );
+                )
+        );
 
-        brandAnimation.addAnimation(slide);
-        brandAnimation.addAnimation(fade);
-
-        brandAnimation.setDuration(1600);
-        brandAnimation.setStartOffset(250);
+        animation.setDuration(1600);
+        animation.setStartOffset(250);
 
         brand.startAnimation(
-                brandAnimation
+                animation
         );
     }
-
-    // ============================================================
-    // STARTSEITEN-KARTEN
-    // ============================================================
 
     private void addHomeCard(
             LinearLayout cards,
@@ -480,13 +504,13 @@ public class MainActivity extends Activity {
                 background
         );
 
-        // ICON
-        TextView iconView = text(
-                icon,
-                34,
-                GOLD,
-                false
-        );
+        TextView iconView =
+                text(
+                        icon,
+                        34,
+                        GOLD,
+                        false
+                );
 
         iconView.setGravity(
                 Gravity.CENTER
@@ -500,13 +524,13 @@ public class MainActivity extends Activity {
                 )
         );
 
-        // TITEL
-        TextView titleView = text(
-                title,
-                16,
-                TEXT,
-                true
-        );
+        TextView titleView =
+                text(
+                        title,
+                        16,
+                        TEXT,
+                        true
+                );
 
         titleView.setGravity(
                 Gravity.CENTER
@@ -522,13 +546,13 @@ public class MainActivity extends Activity {
                 )
         );
 
-        // UNTERTITEL
-        TextView subtitleView = text(
-                subtitle,
-                12,
-                MUTED,
-                false
-        );
+        TextView subtitleView =
+                text(
+                        subtitle,
+                        12,
+                        MUTED,
+                        false
+                );
 
         subtitleView.setGravity(
                 Gravity.CENTER
@@ -568,10 +592,6 @@ public class MainActivity extends Activity {
         );
     }
 
-    // ============================================================
-    // ANFAHREN / ABSTELLEN
-    // ============================================================
-
     private void showChapter(
             String chapter
     ) {
@@ -594,15 +614,13 @@ public class MainActivity extends Activity {
 
         addSpace(15);
 
-        TextView heading = text(
-                chapter,
-                28,
-                GOLD,
-                true
-        );
-
         content.addView(
-                heading
+                text(
+                        chapter,
+                        28,
+                        GOLD,
+                        true
+                )
         );
 
         addSpace(10);
@@ -616,26 +634,28 @@ public class MainActivity extends Activity {
 
             description =
                     "Hier wird Schritt für Schritt beschrieben, "
-                    + "wie die Z-Aero Diamond Clean Anlage gestartet wird.\n\n"
-                    + "Die ausführlichen Arbeitsschritte können später "
-                    + "hier ergänzt werden.";
+                            + "wie die Z-Aero Diamond Clean Anlage "
+                            + "gestartet wird.\n\n"
+                            + "Die ausführlichen Arbeitsschritte "
+                            + "können hier später ergänzt werden.";
 
         } else {
 
             description =
                     "Hier wird Schritt für Schritt beschrieben, "
-                    + "wie die Z-Aero Diamond Clean Anlage sicher "
-                    + "abgestellt wird.\n\n"
-                    + "Die ausführlichen Arbeitsschritte können später "
-                    + "hier ergänzt werden.";
+                            + "wie die Z-Aero Diamond Clean Anlage "
+                            + "sicher abgestellt wird.\n\n"
+                            + "Die ausführlichen Arbeitsschritte "
+                            + "können hier später ergänzt werden.";
         }
 
-        TextView body = text(
-                description,
-                17,
-                TEXT,
-                false
-        );
+        TextView body =
+                text(
+                        description,
+                        17,
+                        TEXT,
+                        false
+                );
 
         body.setPadding(
                 dp(18),
@@ -648,10 +668,6 @@ public class MainActivity extends Activity {
 
         content.addView(info);
     }
-
-    // ============================================================
-    // FEHLERSUCHE
-    // ============================================================
 
     private void showTroubleshooting() {
 
@@ -673,23 +689,23 @@ public class MainActivity extends Activity {
 
         addSpace(15);
 
-        TextView heading = text(
-                "Fehlersuche",
-                28,
-                GOLD,
-                true
+        content.addView(
+                text(
+                        "Fehlersuche",
+                        28,
+                        GOLD,
+                        true
+                )
         );
 
-        content.addView(heading);
-
-        TextView info = text(
-                "Fehler, Ursachen und Lösungen",
-                15,
-                MUTED,
-                false
+        content.addView(
+                text(
+                        "Fehler, Ursachen und Lösungen",
+                        15,
+                        MUTED,
+                        false
+                )
         );
-
-        content.addView(info);
 
         addSpace(12);
 
@@ -710,7 +726,9 @@ public class MainActivity extends Activity {
         if (profi) {
 
             Button add =
-                    button("＋  Fehler anlegen");
+                    button(
+                            "＋  Fehler anlegen"
+                    );
 
             add.setOnClickListener(
                     new View.OnClickListener() {
@@ -731,14 +749,16 @@ public class MainActivity extends Activity {
             LinearLayout empty =
                     panel();
 
-            TextView emptyText = text(
-                    "Noch keine Fehler gespeichert.\n\n"
-                            + "Als Profi kannst du hier Fehler "
-                            + "und Lösungen anlegen.",
-                    16,
-                    MUTED,
-                    false
-            );
+            TextView emptyText =
+                    text(
+                            "Noch keine Fehler gespeichert.\n\n"
+                                    + "Im Profi-Modus kannst du "
+                                    + "Fehler, Lösungen und Bilder "
+                                    + "anlegen.",
+                            16,
+                            MUTED,
+                            false
+                    );
 
             emptyText.setGravity(
                     Gravity.CENTER
@@ -763,25 +783,31 @@ public class MainActivity extends Activity {
             LinearLayout card =
                     panel();
 
-            TextView title = text(
-                    item.title,
-                    19,
-                    GOLD,
-                    true
+            card.addView(
+                    text(
+                            item.title,
+                            19,
+                            GOLD,
+                            true
+                    )
             );
 
-            card.addView(title);
-
-            TextView solution = text(
-                    item.solution,
-                    15,
-                    TEXT,
-                    false
+            addImageToCard(
+                    card,
+                    item.imagePath
             );
+
+            TextView solution =
+                    text(
+                            item.solution,
+                            15,
+                            TEXT,
+                            false
+                    );
 
             solution.setPadding(
                     0,
-                    dp(8),
+                    dp(10),
                     0,
                     0
             );
@@ -823,9 +849,52 @@ public class MainActivity extends Activity {
         }
     }
 
-    // ============================================================
-    // SUCHE
-    // ============================================================
+    private void addImageToCard(
+            LinearLayout card,
+            String path
+    ) {
+
+        if (path == null ||
+                path.isEmpty()) {
+            return;
+        }
+
+        File file =
+                new File(path);
+
+        if (!file.exists()) {
+            return;
+        }
+
+        ImageView image =
+                new ImageView(this);
+
+        image.setImageURI(
+                Uri.fromFile(file)
+        );
+
+        image.setScaleType(
+                ImageView.ScaleType.CENTER_INSIDE
+        );
+
+        image.setAdjustViewBounds(
+                true
+        );
+
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(220)
+                );
+
+        params.topMargin =
+                dp(10);
+
+        card.addView(
+                image,
+                params
+        );
+    }
 
     private void showSearch() {
 
@@ -839,41 +908,22 @@ public class MainActivity extends Activity {
         input.setTextColor(TEXT);
         input.setHintTextColor(MUTED);
 
-        LinearLayout box =
-                new LinearLayout(this);
-
-        box.setPadding(
-                dp(20),
-                dp(5),
-                dp(20),
-                dp(5)
-        );
-
-        box.addView(
-                input,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
-
         new AlertDialog.Builder(this)
-                .setTitle("Fehlersuche")
-                .setView(box)
+                .setTitle(
+                        "Fehlersuche"
+                )
+                .setView(input)
                 .setPositiveButton(
                         "Suchen",
                         (dialog, which) -> {
 
-                            String query =
+                            showSearchResults(
                                     input.getText()
                                             .toString()
                                             .trim()
                                             .toLowerCase(
                                                     Locale.getDefault()
-                                            );
-
-                            showSearchResults(
-                                    query
+                                            )
                             );
                         }
                 )
@@ -891,7 +941,9 @@ public class MainActivity extends Activity {
         clearContent();
 
         Button back =
-                button("←  Fehlersuche");
+                button(
+                        "←  Fehlersuche"
+                );
 
         back.setOnClickListener(
                 new View.OnClickListener() {
@@ -906,88 +958,78 @@ public class MainActivity extends Activity {
 
         addSpace(15);
 
-        TextView heading = text(
-                "Suchergebnisse",
-                25,
-                GOLD,
-                true
+        content.addView(
+                text(
+                        "Suchergebnisse",
+                        25,
+                        GOLD,
+                        true
+                )
         );
-
-        content.addView(heading);
 
         int count = 0;
 
         for (ErrorItem item : errors) {
 
             String combined =
-                    (item.title
-                            + " "
-                            + item.solution)
+                    (
+                            item.title
+                                    + " "
+                                    + item.solution
+                    )
                             .toLowerCase(
                                     Locale.getDefault()
                             );
 
-            if (combined.contains(query)) {
-
-                LinearLayout card =
-                        panel();
-
-                card.addView(
-                        text(
-                                item.title,
-                                19,
-                                GOLD,
-                                true
-                        )
-                );
-
-                TextView solution =
-                        text(
-                                item.solution,
-                                15,
-                                TEXT,
-                                false
-                        );
-
-                solution.setPadding(
-                        0,
-                        dp(8),
-                        0,
-                        0
-                );
-
-                card.addView(solution);
-
-                content.addView(
-                        card,
-                        new LinearLayout.LayoutParams(
-                                -1,
-                                -2
-                        )
-                );
-
-                addSpace(10);
-
-                count++;
+            if (!combined.contains(query)) {
+                continue;
             }
+
+            LinearLayout card =
+                    panel();
+
+            card.addView(
+                    text(
+                            item.title,
+                            19,
+                            GOLD,
+                            true
+                    )
+            );
+
+            addImageToCard(
+                    card,
+                    item.imagePath
+            );
+
+            card.addView(
+                    text(
+                            item.solution,
+                            15,
+                            TEXT,
+                            false
+                    )
+            );
+
+            content.addView(card);
+
+            addSpace(10);
+
+            count++;
         }
 
         if (count == 0) {
 
-            TextView none = text(
-                    "Kein passender Fehler gefunden.",
-                    16,
-                    MUTED,
-                    false
+            content.addView(
+                    text(
+                            "Kein passender Fehler gefunden.",
+                            16,
+                            MUTED,
+                            false
+                    )
             );
-
-            content.addView(none);
         }
     }
-
-    // ============================================================
-    // FEHLER ANLEGEN / BEARBEITEN
-    // ============================================================
 
     private void editError(
             final ErrorItem existing
@@ -997,12 +1039,17 @@ public class MainActivity extends Activity {
 
             Toast.makeText(
                     this,
-                    "Nur im Profi-Modus möglich.",
+                    "Bitte zuerst den Profi-Modus aktivieren.",
                     Toast.LENGTH_SHORT
             ).show();
 
             return;
         }
+
+        editingImagePath =
+                existing == null
+                        ? ""
+                        : existing.imagePath;
 
         LinearLayout box =
                 new LinearLayout(this);
@@ -1037,7 +1084,9 @@ public class MainActivity extends Activity {
 
         solution.setTextColor(TEXT);
         solution.setHintTextColor(MUTED);
+
         solution.setMinLines(5);
+
         solution.setGravity(
                 Gravity.TOP
         );
@@ -1061,6 +1110,75 @@ public class MainActivity extends Activity {
                         -1,
                         dp(130)
                 )
+        );
+
+        Button imageButton =
+                button(
+                        "＋  Bild auswählen"
+                );
+
+        box.addView(imageButton);
+
+        editingImagePreview =
+                new ImageView(this);
+
+        editingImagePreview.setScaleType(
+                ImageView.ScaleType.CENTER_INSIDE
+        );
+
+        editingImagePreview.setAdjustViewBounds(
+                true
+        );
+
+        if (editingImagePath != null &&
+                !editingImagePath.isEmpty()) {
+
+            File file =
+                    new File(
+                            editingImagePath
+                    );
+
+            if (file.exists()) {
+
+                editingImagePreview
+                        .setImageURI(
+                                Uri.fromFile(file)
+                        );
+            }
+        }
+
+        box.addView(
+                editingImagePreview,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(180)
+                )
+        );
+
+        imageButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Intent intent =
+                                new Intent(
+                                        Intent.ACTION_OPEN_DOCUMENT
+                                );
+
+                        intent.addCategory(
+                                Intent.CATEGORY_OPENABLE
+                        );
+
+                        intent.setType(
+                                "image/*"
+                        );
+
+                        startActivityForResult(
+                                intent,
+                                REQUEST_ERROR_IMAGE
+                        );
+                    }
+                }
         );
 
         AlertDialog.Builder builder =
@@ -1131,7 +1249,7 @@ public class MainActivity extends Activity {
 
                                             Toast.makeText(
                                                     MainActivity.this,
-                                                    "Bitte beide Felder ausfüllen.",
+                                                    "Bitte Fehler sowie Ursache und Lösung ausfüllen.",
                                                     Toast.LENGTH_SHORT
                                             ).show();
 
@@ -1143,7 +1261,8 @@ public class MainActivity extends Activity {
                                             errors.add(
                                                     new ErrorItem(
                                                             t,
-                                                            s
+                                                            s,
+                                                            editingImagePath
                                                     )
                                             );
 
@@ -1154,9 +1273,15 @@ public class MainActivity extends Activity {
 
                                             existing.solution =
                                                     s;
+
+                                            existing.imagePath =
+                                                    editingImagePath;
                                         }
 
                                         saveErrors();
+
+                                        editingImagePreview =
+                                                null;
 
                                         dialog.dismiss();
 
@@ -1220,13 +1345,107 @@ public class MainActivity extends Activity {
         dialog.show();
     }
 
-    // ============================================================
-    // MENÜ
-    // ============================================================
+    @Override
+    protected void onActivityResult(
+            int requestCode,
+            int resultCode,
+            Intent data
+    ) {
+
+        super.onActivityResult(
+                requestCode,
+                resultCode,
+                data
+        );
+
+        if (requestCode != REQUEST_ERROR_IMAGE
+                || resultCode != RESULT_OK
+                || data == null
+                || data.getData() == null) {
+
+            return;
+        }
+
+        try {
+
+            Uri source =
+                    data.getData();
+
+            File dir =
+                    new File(
+                            getFilesDir(),
+                            "error_images"
+                    );
+
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            File target =
+                    new File(
+                            dir,
+                            "error_"
+                                    + System.currentTimeMillis()
+                                    + ".png"
+                    );
+
+            InputStream input =
+                    getContentResolver()
+                            .openInputStream(source);
+
+            FileOutputStream output =
+                    new FileOutputStream(target);
+
+            byte[] buffer =
+                    new byte[8192];
+
+            int length;
+
+            while (
+                    (length =
+                            input.read(buffer)) > 0
+            ) {
+
+                output.write(
+                        buffer,
+                        0,
+                        length
+                );
+            }
+
+            output.close();
+            input.close();
+
+            editingImagePath =
+                    target.getAbsolutePath();
+
+            if (editingImagePreview != null) {
+
+                editingImagePreview
+                        .setImageURI(
+                                Uri.fromFile(target)
+                        );
+            }
+
+            Toast.makeText(
+                    this,
+                    "Bild ausgewählt.",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+        } catch (Exception e) {
+
+            Toast.makeText(
+                    this,
+                    "Bild konnte nicht übernommen werden.",
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
+    }
 
     private void showMenu() {
 
-        final ArrayList<String> items =
+        ArrayList<String> items =
                 new ArrayList<String>();
 
         items.add("Startseite");
@@ -1287,12 +1506,20 @@ public class MainActivity extends Activity {
 
                                 requestProfi();
 
-                            } else if (
-                                    "Profi-Modus ausschalten"
-                                            .equals(selected)
-                            ) {
+                            } else {
 
                                 profi = false;
+
+                                getSharedPreferences(
+                                        PREFS,
+                                        MODE_PRIVATE
+                                )
+                                        .edit()
+                                        .putBoolean(
+                                                KEY_PROFI,
+                                                false
+                                        )
+                                        .apply();
 
                                 Toast.makeText(
                                         this,
@@ -1300,16 +1527,12 @@ public class MainActivity extends Activity {
                                         Toast.LENGTH_SHORT
                                 ).show();
 
-                                recreate();
+                                showHome();
                             }
                         }
                 )
                 .show();
     }
-
-    // ============================================================
-    // PROFI-MODUS
-    // ============================================================
 
     private void requestProfi() {
 
@@ -1348,13 +1571,24 @@ public class MainActivity extends Activity {
 
                                 profi = true;
 
+                                getSharedPreferences(
+                                        PREFS,
+                                        MODE_PRIVATE
+                                )
+                                        .edit()
+                                        .putBoolean(
+                                                KEY_PROFI,
+                                                true
+                                        )
+                                        .apply();
+
                                 Toast.makeText(
                                         this,
                                         "Profi-Modus aktiviert.",
                                         Toast.LENGTH_SHORT
                                 ).show();
 
-                                recreate();
+                                showHome();
 
                             } else {
 
@@ -1372,10 +1606,6 @@ public class MainActivity extends Activity {
                 )
                 .show();
     }
-
-    // ============================================================
-    // DATENSPEICHERUNG
-    // ============================================================
 
     private void saveErrors() {
 
@@ -1399,16 +1629,21 @@ public class MainActivity extends Activity {
                         item.solution
                 );
 
+                object.put(
+                        "imagePath",
+                        item.imagePath == null
+                                ? ""
+                                : item.imagePath
+                );
+
                 array.put(object);
             }
 
-            SharedPreferences prefs =
-                    getSharedPreferences(
-                            PREFS,
-                            MODE_PRIVATE
-                    );
-
-            prefs.edit()
+            getSharedPreferences(
+                    PREFS,
+                    MODE_PRIVATE
+            )
+                    .edit()
                     .putString(
                             KEY_ERRORS,
                             array.toString()
@@ -1466,6 +1701,10 @@ public class MainActivity extends Activity {
                                 ),
                                 object.optString(
                                         "solution"
+                                ),
+                                object.optString(
+                                        "imagePath",
+                                        ""
                                 )
                         )
                 );
@@ -1481,10 +1720,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    // ============================================================
-    // UI-HILFSMETHODEN
-    // ============================================================
-
     private void clearContent() {
 
         if (content != null) {
@@ -1492,8 +1727,8 @@ public class MainActivity extends Activity {
             content.removeAllViews();
 
             content.setGravity(
-                    Gravity.TOP
-                            | Gravity.CENTER_HORIZONTAL
+                    Gravity.TOP |
+                            Gravity.CENTER_HORIZONTAL
             );
         }
     }
@@ -1590,9 +1825,7 @@ public class MainActivity extends Activity {
         button.setTextColor(GOLD);
         button.setTextSize(20);
         button.setAllCaps(false);
-        button.setBackgroundColor(
-                PANEL
-        );
+        button.setBackgroundColor(PANEL);
 
         return button;
     }
@@ -1647,29 +1880,28 @@ public class MainActivity extends Activity {
     ) {
 
         return (int) (
-                value
-                        * getResources()
-                        .getDisplayMetrics()
-                        .density
+                value *
+                        getResources()
+                                .getDisplayMetrics()
+                                .density
         );
     }
-
-    // ============================================================
-    // FEHLERDATEN
-    // ============================================================
 
     private static class ErrorItem {
 
         String title;
         String solution;
+        String imagePath;
 
         ErrorItem(
                 String title,
-                String solution
+                String solution,
+                String imagePath
         ) {
 
             this.title = title;
             this.solution = solution;
+            this.imagePath = imagePath;
         }
     }
 }

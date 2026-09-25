@@ -3,10 +3,11 @@ name: Android CI
 on:
   push:
     branches:
-      - "hauptsächlich"
+      - "*"
   pull_request:
     branches:
-      - "hauptsächlich"
+      - "*"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -21,14 +22,17 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
-          cache: "gradle"
 
-      - name: Android App bauen
-        run: gradle build
+      - name: Gradle 8.7 einrichten
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: APK bauen
+        run: gradle :app:assembleDebug
 
       - name: APK hochladen
         uses: actions/upload-artifact@v4
-        if: success()
         with:
           name: Z-Aero-Diamond-Clean
           path: app/build/outputs/apk/debug/*.apk

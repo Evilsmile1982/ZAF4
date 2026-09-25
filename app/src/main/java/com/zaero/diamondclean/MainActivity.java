@@ -214,7 +214,6 @@ public class MainActivity extends Activity {
                 new LinearLayout.LayoutParams(-1, -2));
 
         FrameLayout brandWrap = new FrameLayout(this);
-        brandWrap.setGravity(Gravity.CENTER);
 
         TextView brand = tv("Z-Aero Diamond Clean", 30, TEXT, true);
         brand.setGravity(Gravity.CENTER);

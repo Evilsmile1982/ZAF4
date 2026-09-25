@@ -684,13 +684,9 @@ public class MainActivity extends Activity {
 
         String q = query.trim().toLowerCase(Locale.GERMAN);
 
-        if (q.length() > 0 && q.length() < 3) {
-            TextView hint =
-                    tv("Bitte mindestens 3 Zeichen eingeben.",
-                            14, MUTED, false);
-            hint.setGravity(Gravity.CENTER);
-            searchResults.addView(hint,
-                    new LinearLayout.LayoutParams(-1, dp(50)));
+        // Fehler erst ab mindestens 3 eingegebenen Zeichen anzeigen.
+        // Bei 0 bis 2 Zeichen bleibt der Ergebnisbereich leer.
+        if (q.length() < 3) {
             return;
         }
 

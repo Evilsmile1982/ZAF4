@@ -220,22 +220,24 @@ public class MainActivity extends Activity {
         brandWrap.addView(brand,
                 new FrameLayout.LayoutParams(-1, -2));
 
-        // Langsame Einfahr-Animation: 1,8 Sekunden.
+        // Einfahr-Animation: 2,0 Sekunden.
         TranslateAnimation brandSlide = new TranslateAnimation(
                 -dp(280), 0, 0, 0);
-        brandSlide.setDuration(1800);
+        brandSlide.setDuration(2000);
 
         AlphaAnimation brandFade = new AlphaAnimation(0f, 1f);
-        brandFade.setDuration(1800);
+        brandFade.setDuration(2000);
 
         AnimationSet brandSet = new AnimationSet(true);
         brandSet.addAnimation(brandSlide);
         brandSet.addAnimation(brandFade);
         brand.startAnimation(brandSet);
 
-        // Kurzer Diamant-Funkler wie eine kleine Sternschnuppe.
+        // Diamant-Funkel: wandert einmal über den Schriftzug
+        // und bleibt am Ende von "Clean" als Diamant stehen.
         TextView sparkle = tv("✦", 20, GOLD, true);
         sparkle.setGravity(Gravity.CENTER);
+
         FrameLayout.LayoutParams sparkleParams =
                 new FrameLayout.LayoutParams(dp(34), dp(34));
         sparkleParams.gravity = Gravity.CENTER;
@@ -243,33 +245,31 @@ public class MainActivity extends Activity {
 
         TranslateAnimation sparkleMove = new TranslateAnimation(
                 -dp(150), dp(150), 0, 0);
-        sparkleMove.setDuration(850);
-        sparkleMove.setStartOffset(550);
+        sparkleMove.setDuration(2000);
 
         AlphaAnimation sparkleIn = new AlphaAnimation(0f, 1f);
-        sparkleIn.setDuration(220);
-        sparkleIn.setStartOffset(550);
+        sparkleIn.setDuration(180);
 
-        AnimationSet sparkleInSet = new AnimationSet(true);
-        sparkleInSet.addAnimation(sparkleMove);
-        sparkleInSet.addAnimation(sparkleIn);
-        sparkleInSet.setAnimationListener(new AnimationSet.AnimationListener() {
+        AnimationSet sparkleSet = new AnimationSet(true);
+        sparkleSet.addAnimation(sparkleMove);
+        sparkleSet.addAnimation(sparkleIn);
+        sparkleSet.setAnimationListener(new AnimationSet.AnimationListener() {
             @Override
             public void onAnimationStart(android.view.animation.Animation animation) {
             }
 
             @Override
             public void onAnimationEnd(android.view.animation.Animation animation) {
-                AlphaAnimation sparkleOut = new AlphaAnimation(1f, 0f);
-                sparkleOut.setDuration(220);
-                sparkle.startAnimation(sparkleOut);
+                // Am Ende bleibt der Reflex als kleiner Diamant sichtbar.
+                sparkle.setText("◆");
+                sparkle.setAlpha(1f);
             }
 
             @Override
             public void onAnimationRepeat(android.view.animation.Animation animation) {
             }
         });
-        sparkle.startAnimation(sparkleInSet);
+        sparkle.startAnimation(sparkleSet);
 
         home.addView(brandWrap,
                 new LinearLayout.LayoutParams(-1, dp(48)));
@@ -316,10 +316,10 @@ public class MainActivity extends Activity {
         // Die drei Startkarten fahren gleichzeitig von rechts nach links ein.
         TranslateAnimation cardsSlide = new TranslateAnimation(
                 dp(420), 0, 0, 0);
-        cardsSlide.setDuration(1800);
+        cardsSlide.setDuration(2000);
 
         AlphaAnimation cardsFade = new AlphaAnimation(0f, 1f);
-        cardsFade.setDuration(1800);
+        cardsFade.setDuration(2000);
 
         AnimationSet cardsSet = new AnimationSet(true);
         cardsSet.addAnimation(cardsSlide);

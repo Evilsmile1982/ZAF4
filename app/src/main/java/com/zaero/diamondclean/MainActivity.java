@@ -879,8 +879,7 @@ public class MainActivity extends Activity {
         input.setTextSize(16);
         input.setGravity(Gravity.TOP);
         input.setSingleLine(false);
-        input
-
+        input.setMinLines(8);
         input.setPadding(dp(12), dp(12), dp(12), dp(12));
         input.setBackground(bg(PANEL2, 10, GOLD));
 

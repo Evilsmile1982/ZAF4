@@ -6,6 +6,8 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -217,6 +219,7 @@ public class MainActivity extends Activity {
         FrameLayout brandWrap = new FrameLayout(this);
 
         TextView brand = tv("Z-Aero Diamond Clean ◆", 30, TEXT, true);
+        applyBrushBrandStyle(brand);
         brand.setGravity(Gravity.CENTER);
         brandWrap.addView(brand,
                 new FrameLayout.LayoutParams(-1, -2));
@@ -293,6 +296,41 @@ public class MainActivity extends Activity {
                 new LinearLayout.LayoutParams(-1, -2));
     }
 
+    private void applyBrushBrandStyle(TextView brand) {
+        // Farbwelt der Bürste: Blau/Türkis, Weiß und Lime-Grün.
+        // Der Verlauf liegt direkt auf den Buchstaben und dem Diamanten.
+        String label = brand.getText().toString();
+        float textWidth =
+                brand.getPaint().measureText(label);
+
+        LinearGradient brushGradient =
+                new LinearGradient(
+                        0,
+                        0,
+                        Math.max(dp(220), textWidth),
+                        0,
+                        new int[]{
+                                Color.rgb(20, 145, 205),
+                                Color.rgb(40, 190, 230),
+                                Color.WHITE,
+                                Color.rgb(180, 220, 55),
+                                Color.rgb(120, 190, 45),
+                                Color.rgb(20, 145, 205)
+                        },
+                        new float[]{
+                                0.00f,
+                                0.22f,
+                                0.45f,
+                                0.62f,
+                                0.82f,
+                                1.00f
+                        },
+                        Shader.TileMode.CLAMP);
+
+        brand.getPaint().setShader(brushGradient);
+        brand.invalidate();
+    }
+
     private void addHomeCard(
             LinearLayout parent,
             String icon,
@@ -307,13 +345,29 @@ public class MainActivity extends Activity {
         card.setBackground(bg(PANEL, 12, GOLD));
         card.setOnClickListener(listener);
 
-        TextView iconView = tv(icon, 25, GOLD, true);
+        int accentColor = GOLD;
+
+        if ("Anfahren".equals(title)) {
+            accentColor = Color.rgb(45, 205, 80);
+        } else if ("Abstellen".equals(title)) {
+            accentColor = Color.rgb(225, 55, 60);
+        }
+
+        TextView iconView = tv(icon, 25, accentColor, true);
         iconView.setGravity(Gravity.CENTER);
 
         card.addView(iconView,
                 new LinearLayout.LayoutParams(-1, dp(34)));
 
-        TextView titleView = tv(title, 16, TEXT, true);
+        int titleColor = GOLD;
+
+        if ("Anfahren".equals(title)) {
+            titleColor = Color.rgb(45, 205, 80);
+        } else if ("Abstellen".equals(title)) {
+            titleColor = Color.rgb(225, 55, 60);
+        }
+
+        TextView titleView = tv(title, 16, titleColor, true);
         titleView.setGravity(Gravity.CENTER);
 
         card.addView(titleView,

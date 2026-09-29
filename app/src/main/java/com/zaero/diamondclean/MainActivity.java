@@ -5,6 +5,8 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
@@ -38,6 +40,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -213,87 +216,468 @@ public class MainActivity extends Activity {
         TextView welcome = tv("Willkommen bei", 22, GOLD, true);
         welcome.setGravity(Gravity.CENTER);
 
-        home.addView(welcome,
-                new LinearLayout.LayoutParams(-1, -2));
+        home.addView(
+                welcome,
+                new LinearLayout.LayoutParams(-1, -2)
+        );
 
-        FrameLayout brandWrap = new FrameLayout(this);
+        /*
+         * STARTBEREICH
+         *
+         * Die Zahnbürste kommt von rechts.
+         * Der Schriftzug kommt von links.
+         * Beide treffen sich oberhalb bzw. direkt am Schriftzug.
+         */
+        FrameLayout startVisual = new FrameLayout(this);
 
-        TextView brand = tv("Z-Aero Diamond Clean ◆", 30, TEXT, true);
+        // ---------------------------------------------------------
+        // Z-AERO DIAMOND CLEAN
+        // ---------------------------------------------------------
+        TextView brand = tv(
+                "Z-Aero Diamond Clean ◆",
+                30,
+                TEXT,
+                true
+        );
+
         applyBrushBrandStyle(brand);
         brand.setGravity(Gravity.CENTER);
-        brandWrap.addView(brand,
-                new FrameLayout.LayoutParams(-1, -2));
 
-        // Einfahr-Animation: 2,0 Sekunden.
-        TranslateAnimation brandSlide = new TranslateAnimation(
-                -dp(280), 0, 0, 0);
+        FrameLayout.LayoutParams brandParams =
+                new FrameLayout.LayoutParams(
+                        -1,
+                        dp(55)
+                );
+
+        brandParams.gravity =
+                Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM;
+
+        startVisual.addView(brand, brandParams);
+
+        // ---------------------------------------------------------
+        // ZAHNBÜRSTE
+        // ---------------------------------------------------------
+        ImageView toothbrush = new ImageView(this);
+
+        Bitmap toothbrushBitmap =
+                loadToothbrushWithoutWhiteBackground();
+
+        if (toothbrushBitmap != null) {
+            toothbrush.setImageBitmap(toothbrushBitmap);
+        }
+
+        toothbrush.setScaleType(
+                ImageView.ScaleType.CENTER_INSIDE
+        );
+        toothbrush.setAdjustViewBounds(true);
+
+        FrameLayout.LayoutParams toothbrushParams =
+                new FrameLayout.LayoutParams(
+                        -1,
+                        dp(210)
+                );
+
+        toothbrushParams.gravity =
+                Gravity.CENTER_HORIZONTAL | Gravity.TOP;
+
+        startVisual.addView(
+                toothbrush,
+                toothbrushParams
+        );
+
+        // ---------------------------------------------------------
+        // BÜRSTE: VON RECHTS NACH LINKS
+        // ---------------------------------------------------------
+        TranslateAnimation toothbrushSlide =
+                new TranslateAnimation(
+                        dp(500),
+                        0,
+                        0,
+                        0
+                );
+        toothbrushSlide.setDuration(2000);
+
+        AlphaAnimation toothbrushFade =
+                new AlphaAnimation(0f, 1f);
+        toothbrushFade.setDuration(2000);
+
+        AnimationSet toothbrushSet =
+                new AnimationSet(true);
+
+        toothbrushSet.addAnimation(
+                toothbrushSlide
+        );
+        toothbrushSet.addAnimation(
+                toothbrushFade
+        );
+
+        toothbrush.startAnimation(
+                toothbrushSet
+        );
+
+        // ---------------------------------------------------------
+        // SCHRIFTZUG: VON LINKS NACH RECHTS
+        // ---------------------------------------------------------
+        TranslateAnimation brandSlide =
+                new TranslateAnimation(
+                        -dp(420),
+                        0,
+                        0,
+                        0
+                );
         brandSlide.setDuration(2000);
 
-        AlphaAnimation brandFade = new AlphaAnimation(0f, 1f);
+        AlphaAnimation brandFade =
+                new AlphaAnimation(0f, 1f);
         brandFade.setDuration(2000);
 
-        AnimationSet brandSet = new AnimationSet(true);
-        brandSet.addAnimation(brandSlide);
-        brandSet.addAnimation(brandFade);
-        brand.startAnimation(brandSet);
+        AnimationSet brandSet =
+                new AnimationSet(true);
 
-        home.addView(brandWrap,
-                new LinearLayout.LayoutParams(-1, dp(48)));
+        brandSet.addAnimation(
+                brandSlide
+        );
+        brandSet.addAnimation(
+                brandFade
+        );
 
+        brand.startAnimation(
+                brandSet
+        );
+
+        home.addView(
+                startVisual,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(275)
+                )
+        );
+
+        // ---------------------------------------------------------
+        // UNTERTITEL
+        // ---------------------------------------------------------
         TextView subtitle = tv(
                 "Ihre Unterstützung für den sicheren und effizienten Betrieb der Anlage.",
-                15, MUTED, false);
+                15,
+                MUTED,
+                false
+        );
+
         subtitle.setGravity(Gravity.CENTER);
-        subtitle.setPadding(dp(8), 0, dp(8), dp(10));
+        subtitle.setPadding(
+                dp(8),
+                0,
+                dp(8),
+                dp(10)
+        );
 
-        home.addView(subtitle,
-                new LinearLayout.LayoutParams(-1, -2));
+        home.addView(
+                subtitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
+        // ---------------------------------------------------------
+        // MASCHINE
+        // ---------------------------------------------------------
         ImageView machine = new ImageView(this);
-        machine.setImageResource(R.drawable.machine);
-        machine.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        machine.setImageResource(
+                R.drawable.machine
+        );
+        machine.setScaleType(
+                ImageView.ScaleType.CENTER_INSIDE
+        );
         machine.setAdjustViewBounds(true);
 
         LinearLayout.LayoutParams imageParams =
-                new LinearLayout.LayoutParams(-1, dp(205));
+                new LinearLayout.LayoutParams(
+                        -1,
+                        dp(205)
+                );
+
         imageParams.bottomMargin = dp(12);
 
-        home.addView(machine, imageParams);
+        home.addView(
+                machine,
+                imageParams
+        );
 
+        // ---------------------------------------------------------
+        // STARTKARTEN
+        // ---------------------------------------------------------
         LinearLayout cards = new LinearLayout(this);
-        cards.setOrientation(LinearLayout.HORIZONTAL);
-        cards.setGravity(Gravity.CENTER);
+        cards.setOrientation(
+                LinearLayout.HORIZONTAL
+        );
+        cards.setGravity(
+                Gravity.CENTER
+        );
 
-        addHomeCard(cards, "▶", "Anfahren",
+        addHomeCard(
+                cards,
+                "▶",
+                "Anfahren",
                 "Anlage starten",
-                v -> showChapter("Anfahren"));
+                v -> showChapter("Anfahren")
+        );
 
-        addHomeCard(cards, "■", "Abstellen",
+        addHomeCard(
+                cards,
+                "■",
+                "Abstellen",
                 "Anlage sicher\nherunterfahren",
-                v -> showChapter("Abstellen"));
+                v -> showChapter("Abstellen")
+        );
 
-        addHomeCard(cards, "⌕", "Fehlersuche",
+        addHomeCard(
+                cards,
+                "⌕",
+                "Fehlersuche",
                 "Fehler und\nLösungen",
-                v -> showTroubleshooting());
+                v -> showTroubleshooting()
+        );
 
-        home.addView(cards,
-                new LinearLayout.LayoutParams(-1, -2));
+        home.addView(
+                cards,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
-        // Die drei Startkarten fahren gleichzeitig von rechts nach links ein.
-        TranslateAnimation cardsSlide = new TranslateAnimation(
-                dp(420), 0, 0, 0);
+        // ---------------------------------------------------------
+        // KARTENANIMATION
+        // ---------------------------------------------------------
+        TranslateAnimation cardsSlide =
+                new TranslateAnimation(
+                        dp(420),
+                        0,
+                        0,
+                        0
+                );
         cardsSlide.setDuration(2000);
 
-        AlphaAnimation cardsFade = new AlphaAnimation(0f, 1f);
+        AlphaAnimation cardsFade =
+                new AlphaAnimation(0f, 1f);
         cardsFade.setDuration(2000);
 
-        AnimationSet cardsSet = new AnimationSet(true);
-        cardsSet.addAnimation(cardsSlide);
-        cardsSet.addAnimation(cardsFade);
-        cards.startAnimation(cardsSet);
+        AnimationSet cardsSet =
+                new AnimationSet(true);
 
-        content.addView(home,
-                new LinearLayout.LayoutParams(-1, -2));
+        cardsSet.addAnimation(
+                cardsSlide
+        );
+        cardsSet.addAnimation(
+                cardsFade
+        );
+
+        cards.startAnimation(
+                cardsSet
+        );
+
+        content.addView(
+                home,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+    }
+
+    /*
+     * Lädt die Zahnbürste aus drawable-nodpi.
+     *
+     * Nur der weiße, mit dem Außenrand verbundene Hintergrund
+     * wird transparent gemacht.
+     *
+     * Dadurch bleiben weiße Borsten und die weiße
+     * "Philips Sonicare"-Beschriftung auf dem schwarzen Griff
+     * erhalten.
+     */
+    private Bitmap loadToothbrushWithoutWhiteBackground() {
+
+        Bitmap original =
+                BitmapFactory.decodeResource(
+                        getResources(),
+                        R.drawable.toothbrush_start
+                );
+
+        if (original == null) {
+            return null;
+        }
+
+        Bitmap result =
+                original.copy(
+                        Bitmap.Config.ARGB_8888,
+                        true
+                );
+
+        int width = result.getWidth();
+        int height = result.getHeight();
+
+        boolean[] visited =
+                new boolean[width * height];
+
+        ArrayDeque<Integer> queue =
+                new ArrayDeque<>();
+
+        // Randpixel als mögliche Startpunkte des weißen
+        // Außenbereichs hinzufügen.
+        for (int x = 0; x < width; x++) {
+            addBackgroundStart(
+                    result,
+                    visited,
+                    queue,
+                    x,
+                    0,
+                    width,
+                    height
+            );
+
+            addBackgroundStart(
+                    result,
+                    visited,
+                    queue,
+                    x,
+                    height - 1,
+                    width,
+                    height
+            );
+        }
+
+        for (int y = 0; y < height; y++) {
+            addBackgroundStart(
+                    result,
+                    visited,
+                    queue,
+                    0,
+                    y,
+                    width,
+                    height
+            );
+
+            addBackgroundStart(
+                    result,
+                    visited,
+                    queue,
+                    width - 1,
+                    y,
+                    width,
+                    height
+            );
+        }
+
+        // Flood-Fill:
+        // Nur weißer Bereich, der mit dem Außenrand verbunden ist,
+        // wird transparent.
+        while (!queue.isEmpty()) {
+
+            int position = queue.removeFirst();
+
+            int x = position % width;
+            int y = position / width;
+
+            int pixel = result.getPixel(x, y);
+
+            if (!isBackgroundPixel(pixel)) {
+                continue;
+            }
+
+            result.setPixel(
+                    x,
+                    y,
+                    Color.TRANSPARENT
+            );
+
+            addBackgroundStart(
+                    result,
+                    visited,
+                    queue,
+                    x + 1,
+                    y,
+                    width,
+                    height
+            );
+
+            addBackgroundStart(
+                    result,
+                    visited,
+                    queue,
+                    x - 1,
+                    y,
+                    width,
+                    height
+            );
+
+            addBackgroundStart(
+                    result,
+                    visited,
+                    queue,
+                    x,
+                    y + 1,
+                    width,
+                    height
+            );
+
+            addBackgroundStart(
+                    result,
+                    visited,
+                    queue,
+                    x,
+                    y - 1,
+                    width,
+                    height
+            );
+        }
+
+        return result;
+    }
+
+    private void addBackgroundStart(
+            Bitmap bitmap,
+            boolean[] visited,
+            ArrayDeque<Integer> queue,
+            int x,
+            int y,
+            int width,
+            int height) {
+
+        if (x < 0 ||
+                x >= width ||
+                y < 0 ||
+                y >= height) {
+            return;
+        }
+
+        int index = y * width + x;
+
+        if (visited[index]) {
+            return;
+        }
+
+        int pixel = bitmap.getPixel(x, y);
+
+        if (!isBackgroundPixel(pixel)) {
+            return;
+        }
+
+        visited[index] = true;
+        queue.addLast(index);
+    }
+
+    private boolean isBackgroundPixel(int pixel) {
+
+        int alpha = Color.alpha(pixel);
+        int red = Color.red(pixel);
+        int green = Color.green(pixel);
+        int blue = Color.blue(pixel);
+
+        return alpha > 0
+                && red >= 245
+                && green >= 245
+                && blue >= 245;
     }
 
     private void applyBrushBrandStyle(TextView brand) {
@@ -495,7 +879,8 @@ public class MainActivity extends Activity {
         input.setTextSize(16);
         input.setGravity(Gravity.TOP);
         input.setSingleLine(false);
-        input.setMinLines(8);
+        input
+
         input.setPadding(dp(12), dp(12), dp(12), dp(12));
         input.setBackground(bg(PANEL2, 10, GOLD));
 
@@ -1696,3 +2081,9 @@ public class MainActivity extends Activity {
         }
     }
 }
+
+
+
+
+
+            
